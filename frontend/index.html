@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Gerador de Excedente</title>
+
+  <!-- Estilos -->
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Bibliotecas -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+
+<body>
+
+  <!-- ================= HEADER ================= -->
+  <header>
+    <h1>Gerador de Excedente</h1>
+    <p>Análise inteligente de CSV</p>
+  </header>
+
+  <!-- ================= UPLOAD ================= -->
+  <section class="upload">
+    <!-- Botão customizado para input file -->
+    <label for="csvFile" class="btn-file">Escolher arquivos</label>
+
+    <!-- Nome dos arquivos selecionados -->
+    <span id="nomeArquivos" class="arquivos-info"></span>
+
+    <!-- Input real (oculto) -->
+    <input type="file" id="csvFile" accept=".csv" multiple hidden>
+
+    <button onclick="enviar()">Processar CSV(s)</button>
+  </section>
+
+  <!-- ================= FILTROS ================= -->
+  <div class="filtros">
+
+    <!-- Filtro por tipo de comunicação -->
+    <select id="filtroComunicacao">
+      <option value="">Todos os Tipos de Comunicação</option>
+      <option value="Satélite">Satélite</option>
+      <option value="GPRS">GPRS</option>
+      <option value="Em memória">Em memória</option>
+    </select>
+
+    <!-- Filtro por placa (dinâmico) -->
+    <select id="filtroPlaca" onchange="trocarPlaca()">
+      <option value="">Selecione a placa</option>
+    </select>
+  </div>
+
+  <!-- ================= CARDS ================= -->
+  <section class="cards">
+    <div class="card">
+      <span>Placa</span>
+      <h2 id="placa">—</h2>
+    </div>
+
+    <div class="card">
+      <span>Total Televentos</span>
+      <h2 id="total">—</h2>
+    </div>
+
+    <div class="card destaque">
+      <span>Evento Principal</span>
+      <h2 id="principal">—</h2>
+    </div>
+  </section>
+
+  <!-- ================= CONTEÚDO ================= -->
+  <section class="conteudo">
+
+    <!-- Gráfico -->
+    <div id="graficoWrapper" class="grafico-wrapper">
+      <canvas id="grafico"></canvas>
+    </div>
+
+    <!-- Tabela -->
+    <table>
+      <thead>
+        <tr>
+          <th>Evento</th>
+          <th>Qtd</th>
+          <th>%</th>
+        </tr>
+      </thead>
+      <tbody id="tabelaDados"></tbody>
+    </table>
+  </section>
+
+  <!-- ================= AÇÕES ================= -->
+  <div class="acoes">
+    <button onclick="exportarPDF()">Exportar PDF</button>
+    <button onclick="exportarExcel()">Exportar Excel</button>
+  </div>
+
+  <!-- Script principal -->
+  <script src="script.js"></script>
+</body>
+
+</html>
