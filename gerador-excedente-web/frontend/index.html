@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Gerador de Excedente</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+
+<body>
+
+  <header>
+    <h1>Gerador de Excedente</h1>
+    <p>Análise inteligente de CSV</p>
+  </header>
+
+  <section class="upload">
+    <input type="file" id="csvFile" accept=".csv">
+    <button onclick="enviar()">Processar CSV</button>
+  </section>
+
+  <section class="cards">
+    <div class="card"><span>Placa</span>
+      <h2 id="placa">—</h2>
+    </div>
+    <div class="card"><span>Total</span>
+      <h2 id="total">—</h2>
+    </div>
+    <div class="card destaque"><span>Evento Principal</span>
+      <h2 id="principal">—</h2>
+    </div>
+  </section>
+
+  <!---------------------------------------------------------->
+
+  <div class="filtros">
+    <select id="filtroTeleevento">
+      <option value="">Todos os Teleeventos</option>
+      <option value="Posição Automática">Posição Automática</option>
+      <option value="Telemetria Automática">Telemetria Automática</option>
+    </select>
+
+    <select id="filtroComunicacao">
+      <option value="">Todos os Tipos de Comunicação</option>
+      <option value="Satélite">Satélite</option>
+      <option value="GPRS">GPRS</option>
+      <option value="Em memória">Em memória</option>
+    </select>
+
+    <!---------------------------------------------------------->
+
+    <section class="conteudo">
+      <canvas id="grafico"></canvas>
+      <table>
+        <thead>
+          <tr>
+            <th>Evento</th>
+            <th>Qtd</th>
+            <th>%</th>
+          </tr>
+        </thead>
+        <tbody id="tabelaDados"></tbody>
+      </table>
+    </section>
+
+
+
+    <div class="acoes">
+      <button onclick="exportarPDF()">Exportar PDF</button>
+      <button onclick="exportarExcel()">Exportar Excel</button>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
