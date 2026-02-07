@@ -143,7 +143,8 @@ http://localhost:8080
 👤 Autor
 
 Adeildo Guilhermy Alves da Silva
-Desenvolvedor Full Stack
+
+</ Desenvolvedor Full Stack >
 
 Projeto desenvolvido especificamente para análise de Excedentes satelitais onde um veículo ao ultrapassado uma certa quantidade de BYTES( 3000, 6000, 8000, etc), comunicação satélite, ser gerado cobranças mediante a quantidade de Bytes extras consumidos. A validação ocorre mediante os principais eventos gerados enquanto se comunica via satélite.
 
