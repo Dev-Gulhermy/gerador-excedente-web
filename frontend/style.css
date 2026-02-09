@@ -148,6 +148,13 @@ tbody tr:hover {
   font-weight: bold;
 }
 
+thead th:nth-child(2),
+thead th:nth-child(3),
+tbody td:nth-child(2),
+tbody td:nth-child(3) {
+  text-align: right;
+}
+
 /* ================= GRÁFICO ================= */
 /* Wrapper é quem controla o espaço */
 .grafico-wrapper {
