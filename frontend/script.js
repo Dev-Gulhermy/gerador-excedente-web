@@ -36,7 +36,9 @@ function enviar() {
     formData.append("file", file);
     formData.append("comunicacao", comunicacao);
 
-    fetch("https://gerador-excedente-web.onrender.com/api/excedente/processar", {
+    const API_URL = "https://gerador-excedente-web.onrender.com";
+
+    fetch(`${API_URL}/api/excedente/processar`, {
       method: "POST",
       body: formData
     })
