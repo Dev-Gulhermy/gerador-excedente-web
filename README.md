@@ -130,8 +130,8 @@ Backend
 
 Frontend
 - Pode ser hospedado em:
-   - GitHub Pages
-   - Netlify
+   - GitHub Pages 
+   - Netlify - (https://gerador-excedente.netlify.app)
    - Vercel
 - O frontend consome diretamente a API publicada no Render
 
