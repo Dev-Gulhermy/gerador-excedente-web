@@ -79,7 +79,7 @@ Ele resolve um problema comum em ambientes de monitoramento e telecomunicações
 
 ## 🧩 Estrutura do Projeto
 
-
+```
 📁 frontend
  ├── index.html
  ├── style.css
@@ -93,7 +93,7 @@ Ele resolve um problema comum em ambientes de monitoramento e telecomunicações
  ├── Dockerfile
  ├── pom.xml
  └── application.properties
-
+```
 
 ▶️ Executando o Projeto Localmente
 
@@ -107,8 +107,7 @@ spring.servlet.multipart.max-request-size=10MB
 
 3. Execute a aplicação Spring Boot
 4. Backend disponível em:
-
-http://localhost:8080
+ - http://localhost:8080
 
 ---
 
