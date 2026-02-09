@@ -22,6 +22,7 @@ Ele resolve um problema comum em ambientes de monitoramento e telecomunicações
 - Exibir os dados de forma clara e interativa  
 - Evitar sobrecarga visual em gráficos com muitos dados  
 - Demonstrar integração real entre frontend e backend  
+- Simular um cenário profissional de análise e validação de cobranças
 
 ---
 
@@ -52,6 +53,7 @@ Ele resolve um problema comum em ambientes de monitoramento e telecomunicações
 - Visualização de dados com **Chart.js**
 - Boas práticas de UX para gráficos extensos
 - Controle de estado no JavaScript puro
+- Simular um cenário profissional de análise e validação de cobranças
 
 ---
 
@@ -71,23 +73,27 @@ Ele resolve um problema comum em ambientes de monitoramento e telecomunicações
 - Spring Web
 - Upload de arquivos multipart
 - API REST
+- Deploy em nuvem com Docker
 
 ---
 
 ## 🧩 Estrutura do Projeto
 
-```bash
+
 📁 frontend
  ├── index.html
  ├── style.css
  └── script.js
 
 📁 backend
- ├── controller
- ├── service
- ├── model
+ ├── src
+ │   ├── controller
+ │   ├── service
+ │   └── model
+ ├── Dockerfile
+ ├── pom.xml
  └── application.properties
-```
+
 
 ▶️ Executando o Projeto Localmente
 
@@ -115,13 +121,30 @@ http://localhost:8080
 
 ---
 
+🌐 Deploy em Produção
+
+Backend
+- Hospedado no Render
+- Executando via Docker
+- URL base da API:
+  - https://gerador-excedente-web.onrender.com
+
+Frontend
+- Pode ser hospedado em:
+   - GitHub Pages
+   - Netlify
+   - Vercel
+- O frontend consome diretamente a API publicada no Render
+
+---
+
 📊 Visualização de Dados
 
 - O gráfico exibe apenas os Top 15 eventos, evitando quebra de layout
 - A tabela mantém 100% dos dados
 - Ao clicar em um evento da tabela:
-- O gráfico é filtrado automaticamente
-- A linha fica destacada
+  - O gráfico é filtrado automaticamente
+  - A linha fica destacada
 
 ---
 
@@ -135,18 +158,27 @@ http://localhost:8080
 📌 Status do Projeto
 
 ✅ Funcional
-🚀 Em constante evolução
-🔧 Possível expansão para autenticação, banco de dados e deploy em nuvem
+🚀 Em produção
+🔧 Em constante evolução
+
+Possíveis expansões futuras:
+- Autenticação de usuários
+- Persistência em banco de dados
+- Histórico de análises
+- Monitoramento e métricas
+- CI/CD automatizado
 
 ---
 
 👤 Autor
 
 Adeildo Guilhermy Alves da Silva
-
 </ Desenvolvedor Full Stack >
 
-Projeto desenvolvido especificamente para análise de Excedentes satelitais onde um veículo ao ultrapassado uma certa quantidade de BYTES( 3000, 6000, 8000, etc), comunicação satélite, ser gerado cobranças mediante a quantidade de Bytes extras consumidos. A validação ocorre mediante os principais eventos gerados enquanto se comunica via satélite.
+Projeto desenvolvido para análise de excedentes satelitais, onde um veículo, ao ultrapassar determinados limites de consumo de dados (3000, 6000, 8000 bytes, etc.), gera cobranças adicionais durante a comunicação via satélite.
 
-O objetivo era tornar a verificação da cobrança do Excedente (Válida ou não) mais otimizada utillizando de procedimentos como download dos CSVs os quais são armazenados os dados de forma multipla para serem selecionados na interface, mostrando assim, os devidos resultodos para conclusão da tratativa. 
-Ademais, desenvoldido também para estudo, portfólio e demonstração técnica.
+A validação ocorre com base nos principais eventos gerados durante essa comunicação, permitindo identificar se a cobrança do excedente é válida ou não.
+
+O objetivo principal foi otimizar o processo de verificação, eliminando análises manuais extensas, por meio do upload e processamento de múltiplos arquivos CSV, apresentando os resultados de forma clara, visual e confiável.
+
+Além do uso prático, o projeto também foi desenvolvido com foco em estudo, portfólio e demonstração técnica profissional.
