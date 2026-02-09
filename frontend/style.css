@@ -170,3 +170,10 @@ tbody tr:hover {
   width: 100% !important;
   height: 100% !important;
 }
+
+thead th:nth-child(2),
+thead th:nth-child(3),
+tbody td:nth-child(2),
+tbody td:nth-child(3) {
+  text-align: right;
+}
