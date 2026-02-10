@@ -114,9 +114,15 @@ public class ExcedenteService {
         if (comunicacaoCSV == null)
             return false;
 
-        // Normalização para evitar problemas de caixa/acentos
-        String csv = comunicacaoCSV.toUpperCase();
-        String f = filtro.toUpperCase();
+        // Normalização para evitar problemas de caixa/acentos/espaços
+        String csv = comunicacaoCSV.toUpperCase()
+                .toUpperCase()
+                .replaceAll("\\s+", " ") // remove espaços duplicados
+                .trim();
+
+        String f = filtro
+                .toUpperCase()
+                .trim();
 
         return switch (f) {
             case "GPRS" -> csv.startsWith("GPRS");

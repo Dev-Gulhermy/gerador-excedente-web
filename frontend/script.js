@@ -40,6 +40,9 @@ function enviar() {
     formData.append("file", file);
     formData.append("comunicacao", comunicacao);
 
+    // ===============================
+    // CONFIGURAÇÃO DA API
+    // ===============================
     const API_URL =
       location.hostname === "localhost"
         ? "http://localhost:8080"

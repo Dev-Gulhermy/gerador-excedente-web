@@ -21,24 +21,37 @@ public class ExcedenteController {
         this.service = service;
     }
 
-    /* ----------------------------------------------------------------- */
+    /*
+     * -----------------------------------------------------------------
+     * Processa o CSV aplicando filtros de teleevento e comunicação
+     * Sempre retorna JSON (sucesso ou erro)
+     * -----------------------------------------------------------------
+     */
     @PostMapping("/processar")
     public ResponseEntity<?> processar(
             @RequestParam("file") MultipartFile file,
             @RequestParam(required = false) String teleevento,
             @RequestParam(required = false) String comunicacao) {
+
         try {
             ResultadoDTO resultado = service.processar(file, teleevento, comunicacao);
             return ResponseEntity.ok(resultado);
+
         } catch (RuntimeException e) {
+            // 🔴 Erros de regra / filtro → 400
             return ResponseEntity
                     .badRequest()
                     .body(Map.of(
                             "erro", true,
                             "mensagem", e.getMessage()));
+
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Erro ao processar o arquivo CSV");
+            // 🔴 Erros inesperados → 500 (SEMPRE JSON)
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of(
+                            "erro", true,
+                            "mensagem", "Erro interno ao processar o arquivo CSV"));
         }
     }
     /* ----------------------------------------------------------------- */
