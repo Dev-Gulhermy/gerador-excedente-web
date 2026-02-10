@@ -2,6 +2,10 @@
 // VARIÁVEIS GLOBAIS
 // ===============================
 
+
+// Guardar o arquivo original por placa
+let arquivosPorPlaca = {}; // 🔥 NOVO
+
 // Armazena os resultados agrupados por placa
 let resultadosPorPlaca = {};
 
@@ -36,20 +40,38 @@ function enviar() {
     formData.append("file", file);
     formData.append("comunicacao", comunicacao);
 
-    const API_URL = "https://gerador-excedente-web.onrender.com";
+    const API_URL =
+      location.hostname === "localhost"
+        ? "http://localhost:8080"
+        : "https://gerador-excedente-web.onrender.com";
 
     fetch(`${API_URL}/api/excedente/processar`, {
       method: "POST",
       body: formData
     })
-      .then(res => res.json())
+      .then(async res => {
+        // 🔎 Tenta sempre ler o JSON retornado
+        const data = await res.json();
+
+        // ❌ Se o backend retornou erro (400, 500, etc)
+        if (!res.ok) {
+          throw new Error(data.mensagem || "Erro ao processar CSV");
+        }
+
+        // ✅ Sucesso
+        return data;
+      })
       .then(data => {
-        // Salva resultado por placa
+        // Armazena resultado por placa
         resultadosPorPlaca[data.placa] = data;
 
+        // 🔥 Salva o arquivo original associado à placa
+        arquivosPorPlaca[data.placa] = file;
+
+        // Atualiza o select de placas
         atualizarSelectPlacas();
 
-        // Primeira placa carregada vira padrão
+        // Primeira placa processada vira a placa ativa
         if (!placaAtual) {
           placaAtual = data.placa;
           document.getElementById("filtroPlaca").value = placaAtual;
@@ -57,11 +79,46 @@ function enviar() {
         }
       })
       .catch(err => {
-        console.error("Erro:", err);
-        alert("Erro ao processar CSV");
+        // 🔴 Erros de filtro ou backend
+        console.error("Erro ao processar:", err);
+        alert(err.message);
       });
   });
 }
+
+// ================================
+// REPROCESSA PLACA SELECIONADA
+// ================================
+function reprocessarPlacaAtual() {
+  if (!placaAtual) return;
+
+  const comunicacao = document.getElementById("filtroComunicacao").value;
+  const file = arquivosPorPlaca[placaAtual];
+
+  if (!file) return;
+
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("comunicacao", comunicacao);
+
+  const API_URL = "https://gerador-excedente-web.onrender.com";
+
+  fetch(`${API_URL}/api/excedente/processar`, {
+    method: "POST",
+    body: formData
+  })
+    .then(res => res.json())
+    .then(data => {
+      // 🔥 atualiza SOMENTE essa placa
+      resultadosPorPlaca[data.placa] = data;
+      renderizar(data);
+    })
+    .catch(err => {
+      console.error(err);
+      alert("Erro ao reprocessar placa");
+    });
+}
+
 
 // Exibe nomes dos arquivos selecionados
 document.getElementById("csvFile").addEventListener("change", function () {

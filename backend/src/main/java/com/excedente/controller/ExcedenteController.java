@@ -3,6 +3,8 @@ package com.excedente.controller;
 import com.excedente.model.ResultadoDTO;
 import com.excedente.service.ExcedenteService;
 
+import java.util.Map;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -29,7 +31,11 @@ public class ExcedenteController {
             ResultadoDTO resultado = service.processar(file, teleevento, comunicacao);
             return ResponseEntity.ok(resultado);
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity
+                    .badRequest()
+                    .body(Map.of(
+                            "erro", true,
+                            "mensagem", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Erro ao processar o arquivo CSV");
