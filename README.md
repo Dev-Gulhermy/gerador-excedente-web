@@ -1,4 +1,4 @@
-# 📊 Gerador de Excedente de Teleeventos
+# 📊 Gerador de Excedente Web
 
 Aplicação web para **processamento, análise e visualização de excedentes de teleeventos a partir de arquivos CSV**, com backend em **Spring Boot** e frontend em **HTML, CSS e JavaScript**.
 
@@ -131,7 +131,7 @@ Backend
 Frontend
 - Pode ser hospedado em:
    - GitHub Pages 
-   - Netlify - (https://gerador-excedente.netlify.app)
+   - Netlify 
    - Vercel
 - O frontend consome diretamente a API publicada no Render
 
