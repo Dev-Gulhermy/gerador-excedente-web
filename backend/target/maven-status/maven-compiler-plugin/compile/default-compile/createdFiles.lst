@@ -1,1 +1,5 @@
-application.properties
+com\excedente\model\EventoDTO.class
+com\excedente\service\ExcedenteService.class
+com\excedente\controller\ExcedenteController.class
+com\excedente\ExcedenteApplication.class
+com\excedente\model\ResultadoDTO.class

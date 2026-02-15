@@ -107,6 +107,41 @@ select {
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.05);
   box-shadow: 0 0 15px #00e5ff55;
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  box-shadow: 0 0 25px #00e5ff;
+  transform: translateY(-2px);
+}
+
+/* ===================================================== */
+/* 🔥 CARD DE METADADOS (PERÍODO / ARQUIVO PROCESSADO) */
+/* ===================================================== */
+
+/* .card-meta {
+  border: 1px solid #00e5ff44;
+  box-shadow: 0 0 18px #00e5ff66;
+  transition: all 0.3s ease;
+}
+
+.card-meta:hover {
+  box-shadow: 0 0 25px #00e5ff;
+  transform: translateY(-2px);
+} */
+
+.card-meta h3 {
+  margin-top: 8px;
+  font-size: 18px;
+  color: #00e5ff;
+}
+
+.card-meta small {
+  display: block;
+  margin-top: 6px;
+  font-size: 13px;
+  color: #00e5ffaa;
+  word-break: break-word;
 }
 
 /* ================= CONTEÚDO ================= */

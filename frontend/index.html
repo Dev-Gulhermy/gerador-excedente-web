@@ -40,7 +40,7 @@
   <div class="filtros">
 
     <!-- Filtro por tipo de comunicação -->
-    <select id="filtroComunicacao" onchange="reprocessarPlacaAtual()">
+    <select id="filtroComunicacao">
       <option value="">Todos os Tipos de Comunicação</option>
       <option value="Satélite">Satélite</option>
       <option value="GPRS">GPRS</option>
@@ -50,6 +50,11 @@
     <!-- Filtro por placa (dinâmico) -->
     <select id="filtroPlaca" onchange="trocarPlaca()">
       <option value="">Selecione a placa</option>
+    </select>
+
+    <!-- ================= CSV / PERÍODO ================= -->
+    <select id="filtroPeriodo" onchange="trocarPeriodo()">
+      <option value="">Selecione o período</option>
     </select>
   </div>
 
@@ -69,6 +74,16 @@
       <span>Evento Principal</span>
       <h2 id="principal">—</h2>
     </div>
+
+    <!-- ===================================================== -->
+    <!-- 🔥 NOVO CARD - IDENTIFICAÇÃO / AUDITORIA DO PROCESSO -->
+    <!-- ===================================================== -->
+    <div class="card card-meta">
+      <span>Período / Arquivo</span>
+      <h3 id="periodo">—</h3>
+      <small id="arquivo">—</small>
+    </div>
+
   </section>
 
   <!-- ================= CONTEÚDO ================= -->

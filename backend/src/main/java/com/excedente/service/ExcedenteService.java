@@ -5,22 +5,47 @@ import com.excedente.model.ResultadoDTO;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
+/**
+ * ============================================================
+ * SERVICE RESPONSÁVEL PELO PROCESSAMENTO DOS CSVs DE EXCEDENTE
+ * ============================================================
+ *
+ * ✔ Leitura de CSV corporativo ou simples
+ * ✔ Aplicação de filtros (Teleevento / Comunicação)
+ * ✔ Cálculo de totalizações e percentuais
+ * ✔ Identificação de período (data inicial e final)
+ * ✔ Retorno estruturado para o frontend
+ */
 @Service
 public class ExcedenteService {
 
     /**
-     * Processa o CSV aplicando filtros opcionais de teleevento e comunicação.
-     *
-     * Regras de comunicação (SEMÂNTICAS):
-     * - GPRS → GPRS - VIVO / TIM / CLARO / etc
-     * - Satélite → qualquer valor contendo "SAT"
-     * - Em memória → qualquer valor contendo "MEM"
-     *
-     * Caso nenhum filtro seja informado, todos os registros são considerados.
+     * ============================================================
+     * FORMATADOR DE DATA DO CSV
+     * Formato real recebido:
+     * "27/12/2025 16:45:00"
+     * ============================================================
+     */
+    private static final DateTimeFormatter FORMATTER_CSV = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+
+    /**
+     * ============================================================
+     * FORMATADOR DE DATA PARA O FRONTEND
+     * ============================================================
+     */
+    private static final DateTimeFormatter FORMATTER_FRONT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+
+    /**
+     * ============================================================
+     * MÉTODO PRINCIPAL DE PROCESSAMENTO
+     * ============================================================
      */
     public ResultadoDTO processar(
             MultipartFile file,
@@ -30,54 +55,105 @@ public class ExcedenteService {
         BufferedReader reader = new BufferedReader(
                 new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8));
 
-        // 🔎 Lê cabeçalho para validar CSV
+        // ===============================
+        // LEITURA DO CABEÇALHO
+        // ===============================
         String header = reader.readLine();
         if (header == null) {
             throw new RuntimeException("Arquivo CSV vazio");
         }
 
-        // CSV corporativo possui coluna Teleevento
-        boolean csvCorporativo = header.contains("Teleevento");
-        String separador = ",";
+        header = header.replace("\"", "").toUpperCase();
 
+        // ✔ Detecção robusta de CSV corporativo
+        boolean csvCorporativo = header.contains("DATA") &&
+                header.contains("TELEEVENTO") &&
+                header.contains("TIPO DE COMUNICAÇÃO");
+
+        // Regex seguro para CSV com aspas
+        String separadorCSV = ",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)";
+
+        // ===============================
+        // CONTROLE DE PERÍODO
+        // ===============================
+        LocalDateTime dataInicio = null;
+        LocalDateTime dataFim = null;
+
+        // ===============================
+        // VARIÁVEIS DE PROCESSAMENTO
+        // ===============================
         Map<String, Integer> contagem = new HashMap<>();
         String placa = null;
         int total = 0;
 
         String linha;
+
+        // ===============================
+        // LEITURA LINHA A LINHA
+        // ===============================
         while ((linha = reader.readLine()) != null) {
 
             if (linha.isBlank())
                 continue;
 
-            String[] colunas = linha.split(separador);
+            String[] colunas = linha.split(separadorCSV);
 
-            // ================= CSV CORPORATIVO =================
+            // =====================================================
+            // CSV CORPORATIVO (COM DATA)
+            // =====================================================
             if (csvCorporativo) {
 
                 if (colunas.length < 5)
                     continue;
 
                 placa = limpar(colunas[0]);
+
+                // ===============================
+                // PARSE SEGURO DA DATA
+                // ===============================
+                LocalDateTime dataEvento;
+                try {
+                    dataEvento = LocalDateTime.parse(
+                            limpar(colunas[1]),
+                            FORMATTER_CSV);
+                } catch (Exception e) {
+                    // Linha inválida → ignora sem quebrar o processamento
+                    continue;
+                }
+
                 String teleevento = limpar(colunas[2]);
                 String comunicacao = limpar(colunas[4]);
 
-                // 🔎 FILTRO DE TELEEVENTO (COMPARAÇÃO EXATA)
-                if (filtroTeleevento != null && !filtroTeleevento.isBlank()) {
-                    if (!teleevento.equalsIgnoreCase(filtroTeleevento))
-                        continue;
+                // ===============================
+                // CONTROLE DE PERÍODO
+                // ===============================
+                if (dataInicio == null || dataEvento.isBefore(dataInicio)) {
+                    dataInicio = dataEvento;
                 }
 
-                // 🔎 FILTRO DE COMUNICAÇÃO (SEMÂNTICO / INTELIGENTE)
-                if (!comunicacaoAceita(comunicacao, filtroComunicacao))
-                    continue;
+                if (dataFim == null || dataEvento.isAfter(dataFim)) {
+                    dataFim = dataEvento;
+                }
 
-                // Contabiliza eventos válidos
+                // ===============================
+                // FILTROS
+                // ===============================
+                if (filtroTeleevento != null && !filtroTeleevento.isBlank()
+                        && !teleevento.equalsIgnoreCase(filtroTeleevento)) {
+                    continue;
+                }
+
+                if (!comunicacaoAceita(comunicacao, filtroComunicacao)) {
+                    continue;
+                }
+
                 contagem.merge(teleevento, 1, Integer::sum);
+                total++;
 
             } else {
-                // ================= CSV SIMPLES =================
-                // Formato: placa;evento
+                // =====================================================
+                // CSV SIMPLES (SEM DATA)
+                // =====================================================
                 if (colunas.length < 2)
                     continue;
 
@@ -85,67 +161,52 @@ public class ExcedenteService {
                 String evento = limpar(colunas[1]);
 
                 contagem.merge(evento, 1, Integer::sum);
+                total++;
             }
-
-            total++;
         }
 
-        // ❌ Nenhum dado após aplicação dos filtros
+        // ===============================
+        // VALIDAÇÃO FINAL
+        // ===============================
         if (total == 0) {
             throw new RuntimeException("Nenhum dado encontrado com os filtros aplicados");
         }
 
-        return montarResultado(placa, total, contagem);
+        // =====================================================
+        // FORMATAÇÃO FINAL DO PERÍODO
+        // =====================================================
+        String dataInicioStr = "N/A";
+        String dataFimStr = "N/A";
+
+        if (dataInicio != null && dataFim != null) {
+            dataInicioStr = dataInicio.format(FORMATTER_FRONT);
+            dataFimStr = dataFim.format(FORMATTER_FRONT);
+        }
+
+        // ===============================
+        // RETORNO FINAL
+        // ===============================
+        return montarResultado(
+                placa,
+                total,
+                contagem,
+                dataInicioStr,
+                dataFimStr,
+                file.getOriginalFilename());
     }
 
     /**
-     * Define se a comunicação do CSV atende ao filtro selecionado no frontend.
-     *
-     * Exemplo:
-     * - Filtro: "GPRS"
-     * - CSV: "GPRS - TIM" → ACEITA
-     */
-    private boolean comunicacaoAceita(String comunicacaoCSV, String filtro) {
-
-        // Sem filtro → aceita tudo
-        if (filtro == null || filtro.isBlank())
-            return true;
-
-        if (comunicacaoCSV == null)
-            return false;
-
-        // Normalização para evitar problemas de caixa/acentos/espaços
-        String csv = comunicacaoCSV.toUpperCase()
-                .toUpperCase()
-                .replaceAll("\\s+", " ") // remove espaços duplicados
-                .trim();
-
-        String f = filtro
-                .toUpperCase()
-                .trim();
-
-        return switch (f) {
-            case "GPRS" -> csv.startsWith("GPRS");
-            case "SATÉLITE", "SATELITE" -> csv.contains("SAT");
-            case "EM MEMÓRIA", "EM MEMORIA" -> csv.contains("MEM");
-            default -> true; // fallback de segurança
-        };
-    }
-
-    /**
-     * Remove aspas e espaços extras do CSV
-     */
-    private String limpar(String valor) {
-        return valor.replace("\"", "").trim();
-    }
-
-    /**
-     * Monta o DTO final com total e percentuais
+     * ============================================================
+     * MONTA O DTO FINAL
+     * ============================================================
      */
     private ResultadoDTO montarResultado(
             String placa,
             int total,
-            Map<String, Integer> contagem) {
+            Map<String, Integer> contagem,
+            String dataInicio,
+            String dataFim,
+            String nomeArquivo) {
 
         List<EventoDTO> eventos = new ArrayList<>();
 
@@ -158,6 +219,47 @@ public class ExcedenteService {
                     percentual));
         }
 
-        return new ResultadoDTO(placa, total, eventos);
+        eventos.sort((a, b) -> Integer.compare(b.getQtd(), a.getQtd()));
+
+        return new ResultadoDTO(
+                placa,
+                total,
+                eventos,
+                dataInicio,
+                dataFim,
+                nomeArquivo);
+    }
+
+    /**
+     * ============================================================
+     * VALIDAÇÃO DE COMUNICAÇÃO
+     * ============================================================
+     */
+    private boolean comunicacaoAceita(String comunicacaoCSV, String filtro) {
+
+        if (filtro == null || filtro.isBlank())
+            return true;
+
+        if (comunicacaoCSV == null)
+            return false;
+
+        String csv = comunicacaoCSV.toUpperCase().trim();
+        String f = filtro.toUpperCase().trim();
+
+        return switch (f) {
+            case "GPRS" -> csv.startsWith("GPRS");
+            case "SATÉLITE", "SATELITE" -> csv.contains("SAT");
+            case "EM MEMÓRIA", "EM MEMORIA" -> csv.contains("MEM");
+            default -> true;
+        };
+    }
+
+    /**
+     * ============================================================
+     * LIMPA ASPAS E ESPAÇOS
+     * ============================================================
+     */
+    private String limpar(String valor) {
+        return valor.replace("\"", "").trim();
     }
 }

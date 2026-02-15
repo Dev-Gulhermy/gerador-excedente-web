@@ -2,15 +2,21 @@
 // VARIÁVEIS GLOBAIS
 // ===============================
 
+// 🔥 Arquivo original por ID do resultado (placa + período + arquivo)
+let arquivosPorResultado = {};
 
-// Guardar o arquivo original por placa
-let arquivosPorPlaca = {}; // 🔥 NOVO
-
-// Armazena os resultados agrupados por placa
+// 🔥 Resultados agrupados por PLACA
+// Estrutura:
+// {
+//   PLACA: [ resultado1, resultado2, ... ]
+// }
 let resultadosPorPlaca = {};
 
 // Placa atualmente selecionada
 let placaAtual = null;
+
+// Índice do resultado (CSV / período) selecionado
+let resultadoAtualIndex = 0;
 
 // Resultado atualmente exibido (para gráfico/exportação)
 let resultadoGraf = null;
@@ -20,6 +26,12 @@ let chartGraf = null;
 
 // Evento selecionado no gráfico/tabela
 let eventoSelecionado = null;
+
+// ===============================  
+// RESULTADO ORIGINAL DO BACKEND 
+// =============================== 
+let resultadoBackend = null;
+
 
 // ===============================
 // UPLOAD / ENVIO DOS CSVs
@@ -34,15 +46,18 @@ function enviar() {
 
   const comunicacao = document.getElementById("filtroComunicacao").value;
 
-  // Envia cada CSV separadamente
   [...input.files].forEach(file => {
     const formData = new FormData();
     formData.append("file", file);
     formData.append("comunicacao", comunicacao);
 
     // ===============================
-    // CONFIGURAÇÃO DA API
+    // CONFIGURAÇÃO DA API (BACKEND)
     // ===============================
+    // 🔥 FORÇADO PARA BACKEND LOCAL
+    // Evita chamar Render acidentalmente
+    // const API_URL = "http://localhost:8080";
+
     const API_URL =
       location.hostname === "localhost"
         ? "http://localhost:8080"
@@ -53,81 +68,52 @@ function enviar() {
       body: formData
     })
       .then(async res => {
-        // 🔎 Tenta sempre ler o JSON retornado
         const data = await res.json();
-
-        // ❌ Se o backend retornou erro (400, 500, etc)
-        if (!res.ok) {
-          throw new Error(data.mensagem || "Erro ao processar CSV");
-        }
-
-        // ✅ Sucesso
+        if (!res.ok) throw new Error(data.mensagem || "Erro ao processar CSV");
         return data;
       })
       .then(data => {
-        // Armazena resultado por placa
-        resultadosPorPlaca[data.placa] = data;
 
-        // 🔥 Salva o arquivo original associado à placa
-        arquivosPorPlaca[data.placa] = file;
+        // ===============================
+        // AGRUPAMENTO CORRETO POR PLACA
+        // ===============================
+        if (!resultadosPorPlaca[data.placa]) {
+          resultadosPorPlaca[data.placa] = [];
+        }
 
-        // Atualiza o select de placas
+        // 🔥 ID único do resultado (não sobrescreve)
+        data._id = `${data.placa}_${data.nomeArquivo}_${data.dataInicio}_${data.dataFim}`;
+
+        resultadosPorPlaca[data.placa].push(data);
+
+        // Guarda o arquivo original vinculado a esse resultado
+        arquivosPorResultado[data._id] = file;
+
         atualizarSelectPlacas();
 
-        // Primeira placa processada vira a placa ativa
+        // Primeira placa enviada vira a ativa
         if (!placaAtual) {
           placaAtual = data.placa;
           document.getElementById("filtroPlaca").value = placaAtual;
-          renderizar(data);
+          carregarPeriodos();
         }
       })
       .catch(err => {
-        // 🔴 Erros de filtro ou backend
-        console.error("Erro ao processar:", err);
+        console.error(err);
         alert(err.message);
       });
   });
 }
 
-// ================================
-// REPROCESSA PLACA SELECIONADA
-// ================================
-function reprocessarPlacaAtual() {
-  if (!placaAtual) return;
 
-  const comunicacao = document.getElementById("filtroComunicacao").value;
-  const file = arquivosPorPlaca[placaAtual];
-
-  if (!file) return;
-
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("comunicacao", comunicacao);
-
-  const API_URL = "https://gerador-excedente-web.onrender.com";
-
-  fetch(`${API_URL}/api/excedente/processar`, {
-    method: "POST",
-    body: formData
-  })
-    .then(res => res.json())
-    .then(data => {
-      // 🔥 atualiza SOMENTE essa placa
-      resultadosPorPlaca[data.placa] = data;
-      renderizar(data);
-    })
-    .catch(err => {
-      console.error(err);
-      alert("Erro ao reprocessar placa");
-    });
-}
-
-
-// Exibe nomes dos arquivos selecionados
+// ===============================
+// EXIBE NOMES DOS CSVs SELECIONADOS
+// ===============================
 document.getElementById("csvFile").addEventListener("change", function () {
   document.getElementById("nomeArquivos").innerText =
     [...this.files].map(f => f.name).join(", ");
 });
+
 
 // ===============================
 // SELECT DE PLACAS
@@ -141,15 +127,116 @@ function atualizarSelectPlacas() {
   });
 }
 
-function trocarPlaca() {
-  const select = document.getElementById("filtroPlaca");
-  placaAtual = select.value;
+// ================================
+// REPROCESSA O RESULTADO ATUAL
+// (PLACA + PERÍODO + CSV)
+// ================================
+function reprocessarPlacaAtual() {
 
   if (!placaAtual) return;
 
-  eventoSelecionado = null;
-  renderizar(resultadosPorPlaca[placaAtual]);
+  const comunicacao =
+    document.getElementById("filtroComunicacao").value;
+
+  // 🔥 Resultado atualmente selecionado
+  const resultadoAtual =
+    resultadosPorPlaca[placaAtual][resultadoAtualIndex];
+
+  if (!resultadoAtual) {
+    console.warn("Resultado atual não encontrado");
+    return;
+  }
+
+  // 🔥 Recupera o arquivo correto pelo _id
+  const file = arquivosPorResultado[resultadoAtual._id];
+
+  if (!file) {
+    console.warn("Arquivo não encontrado para o resultado:", resultadoAtual._id);
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("comunicacao", comunicacao);
+
+  // ===============================
+  // CONFIGURAÇÃO DA API (BACKEND)
+  // ===============================
+  // 🔥 FORÇADO PARA BACKEND LOCAL
+  // Evita chamar Render acidentalmente
+  // const API_URL = "http://localhost:8080";
+
+  const API_URL =
+    location.hostname === "localhost"
+      ? "http://localhost:8080"
+      : "https://gerador-excedente-web.onrender.com";
+
+  fetch(`${API_URL}/api/excedente/processar`, {
+    method: "POST",
+    body: formData
+  })
+    .then(async res => {
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.mensagem || "Erro ao reprocessar CSV");
+      }
+      return data;
+    })
+    .then(data => {
+
+      // 🔥 MANTÉM O MESMO _id (substitui apenas os dados)
+      data._id = resultadoAtual._id;
+
+      resultadosPorPlaca[placaAtual][resultadoAtualIndex] = data;
+
+      renderizar(data);
+    })
+    .catch(err => {
+      console.error("Erro ao reprocessar:", err);
+      alert(err.message);
+    });
 }
+
+
+// ===============================
+// AO TROCAR PLACA → CARREGA PERÍODOS
+// ===============================
+function trocarPlaca() {
+  placaAtual = document.getElementById("filtroPlaca").value;
+  if (!placaAtual) return;
+
+  carregarPeriodos();
+}
+
+
+// ===============================
+// SELECT DE PERÍODOS / CSVs
+// ===============================
+function carregarPeriodos() {
+  const selectPeriodo = document.getElementById("filtroPeriodo");
+  selectPeriodo.innerHTML = `<option value="">Selecione o período</option>`;
+
+  resultadosPorPlaca[placaAtual].forEach((r, index) => {
+    selectPeriodo.innerHTML += `
+      <option value="${index}">
+        ${formatarData(r.dataInicio)} até ${formatarData(r.dataFim)} (${r.nomeArquivo})
+      </option>
+    `;
+  });
+
+  resultadoAtualIndex = 0;
+  renderizar(resultadosPorPlaca[placaAtual][0]);
+}
+
+function trocarPeriodo() {
+  const index = document.getElementById("filtroPeriodo").value;
+  if (index === "") return;
+
+  resultadoAtualIndex = index;
+  eventoSelecionado = null;
+  renderizar(resultadosPorPlaca[placaAtual][index]);
+}
+
 
 // ===============================
 // RENDERIZAÇÃO (CARDS / TABELA / GRÁFICO)
@@ -160,19 +247,26 @@ function renderizar(d) {
   resultadoGraf = d;
 
   // ===============================
-  // CARDS
+  // CARDS PRINCIPAIS
   // ===============================
   document.getElementById("placa").innerText = d.placa;
   document.getElementById("total").innerText = d.total;
 
-  // Ordena eventos por quantidade (desc)
   const eventosOrdenados = [...d.eventos].sort((a, b) => b.qtd - a.qtd);
-
   document.getElementById("principal").innerText =
     eventosOrdenados[0]?.nome ?? "-";
 
   // ===============================
-  // TABELA (SEM LIMITE)
+  // CARD PERÍODO / ARQUIVO
+  // ===============================
+  document.getElementById("periodo").innerText =
+    `${formatarData(d.dataInicio)} até ${formatarData(d.dataFim)}`;
+
+  document.getElementById("arquivo").innerText =
+    d.nomeArquivo ?? "-";
+
+  // ===============================
+  // TABELA
   // ===============================
   const tbody = document.getElementById("tabelaDados");
   tbody.innerHTML = "";
@@ -190,56 +284,39 @@ function renderizar(d) {
   });
 
   // ===============================
-  // GRÁFICO (TOP N)
+  // GRÁFICO
   // ===============================
-  const LIMITE_GRAFICO = 15; // 🔥 TOP 15 eventos no gráfico
+  const LIMITE_GRAFICO = 15;
 
-  const eventosParaGrafico = (eventoSelecionado
+  const eventosGraf = (eventoSelecionado
     ? eventosOrdenados.filter(e => e.nome === eventoSelecionado)
     : eventosOrdenados
   ).slice(0, LIMITE_GRAFICO);
 
-  const labels = eventosParaGrafico.map(e => e.nome);
-  const valores = eventosParaGrafico.map(e => e.qtd);
+  const labels = eventosGraf.map(e => e.nome);
+  const valores = eventosGraf.map(e => e.qtd);
 
   const canvas = document.getElementById("grafico");
-
   const wrapper = document.getElementById("graficoWrapper");
 
-  // Destroi gráfico anterior
   if (chartGraf) chartGraf.destroy();
 
-  // 🔥 CONTROLE DO ESPAÇO DO GRÁFICO
   if (!valores.length) {
     wrapper.classList.remove("ativo");
-    canvas.classList.remove("ativo");
     return;
   }
 
-  // Exibe wrapper + canvas apenas quando necessário
   wrapper.classList.add("ativo");
-
-  canvas.style.display = "block";
-  canvas.offsetHeight; // força reflow
-  canvas.classList.add("ativo");
 
   chartGraf = new Chart(canvas, {
     type: "bar",
     data: {
       labels,
-      datasets: [{
-        data: valores
-      }]
+      datasets: [{ data: valores }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-
-      animation: {
-        duration: 500,
-        easing: "easeOutQuart"
-      },
-
       plugins: {
         legend: { display: false },
         title: {
@@ -249,31 +326,22 @@ function renderizar(d) {
             : `Top ${LIMITE_GRAFICO} Eventos`
         }
       },
-
       scales: {
-        x: {
-          ticks: {
-            autoSkip: true,
-            maxTicksLimit: 10, // 🔥 evita explosão do eixo X
-            maxRotation: 45,
-            minRotation: 0
-          }
-        },
-        y: {
-          beginAtZero: true
-        }
+        y: { beginAtZero: true }
       }
     }
   });
 }
 
+
 // ===============================
-// FILTRO POR EVENTO (CLICK NA TABELA)
+// FILTRO POR EVENTO
 // ===============================
 function filtrarEventoGraf(nome) {
   eventoSelecionado = eventoSelecionado === nome ? null : nome;
   renderizar(resultadoGraf);
 }
+
 
 // ===============================
 // EXPORTAÇÕES
@@ -290,7 +358,10 @@ function exportarExcel() {
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Excedente");
 
-  XLSX.writeFile(wb, `excedente_${resultadoGraf.placa}.xlsx`);
+  XLSX.writeFile(
+    wb,
+    `excedente_${resultadoGraf.placa}_${resultadoGraf.dataInicio}_${resultadoGraf.dataFim}.xlsx`
+  );
 }
 
 function exportarPDF() {
@@ -300,8 +371,9 @@ function exportarPDF() {
   const pdf = new jsPDF();
 
   pdf.text(`Placa: ${resultadoGraf.placa}`, 10, 15);
+  pdf.text(`Período: ${formatarData(resultadoGraf.dataInicio)} até ${formatarData(resultadoGraf.dataFim)}`, 10, 22);
 
-  let y = 30;
+  let y = 35;
   resultadoGraf.eventos.forEach(e => {
     pdf.text(`${e.nome} - ${e.qtd} (${e.percentual.toFixed(2)}%)`, 10, y);
     y += 8;
@@ -310,3 +382,28 @@ function exportarPDF() {
   pdf.save(`excedente_${resultadoGraf.placa}.pdf`);
 }
 
+
+// ===============================
+// FUNÇÃO AUXILIAR – FORMATA DATA
+// (BACKEND JÁ ENVIA NO FORMATO CORRETO)
+// ===============================
+function formatarData(data) {
+  if (!data || data === "N/A" || data === "undefined") {
+    return "-";
+  }
+
+  // 🔥 Data já vem no formato:
+  // dd/MM/yyyy HH:mm
+  return data;
+}
+
+// ===============================
+// EVENTO DE FILTRO DE COMUNICAÇÃO
+// ===============================
+document
+  .getElementById("filtroComunicacao")
+  .addEventListener("change", () => {
+    if (placaAtual) {
+      reprocessarPlacaAtual();
+    }
+  });
