@@ -19,7 +19,8 @@ Este projeto foi desenvolvido com foco em:
   📡 Validação técnica de excedente satelital
   
 Ele resolve um problema comum em ambientes de monitoramento e telecomunicações:  
-➡️ **identificar, organizar e analisar eventos excedentes de forma rápida e visual**.
+
+  ➡️ **identificar, organizar e analisar eventos excedentes de forma rápida e visual**.
 
 ---
 
@@ -53,8 +54,11 @@ Ele resolve um problema comum em ambientes de monitoramento e telecomunicações
 - **Gráfico de barras (Top N eventos)** com limitação inteligente
 - Destaque de evento ao clicar na tabela
 - Exportação para:
+
   - 📄 **PDF**
+  
   - 📊 **Excel (.xlsx)**
+  
 - Interface responsiva com **tema dark neon**
 - Proteção contra quebra de layout com grandes volumes de dados
 
@@ -199,6 +203,7 @@ Frontend
 
 📊 Excel (.xlsx)
 Exporta todos os eventos conforme os filtros aplicados.
+
 📄 PDF
 Gera relatório consolidado com os dados analisados.
 
