@@ -8,8 +8,11 @@ O sistema permite enviar múltiplos CSVs, agrupar dados por **placa**, gerar **g
 
 ## 🚀 Visão Geral
 
-Este projeto foi desenvolvido com foco em **análise de grandes volumes de dados**, visualização clara de informações e integração completa entre **frontend e backend**.
-
+Este projeto foi desenvolvido com foco em: 
+  🔎 Análise de grandes volumes de dados
+  📊 Visualização clara e estratégica de informações
+  🔗 Integração completa entre frontend e backend (API REST)
+  📡 Validação técnica de excedente satelital
 Ele resolve um problema comum em ambientes de monitoramento e telecomunicações:  
 ➡️ **identificar, organizar e analisar eventos excedentes de forma rápida e visual**.
 
@@ -17,19 +20,28 @@ Ele resolve um problema comum em ambientes de monitoramento e telecomunicações
 
 ## 🎯 Objetivo do Projeto
 
-- Processar arquivos CSV com milhares de registros  
-- Agrupar e consolidar eventos por placa  
-- Exibir os dados de forma clara e interativa  
-- Evitar sobrecarga visual em gráficos com muitos dados  
-- Demonstrar integração real entre frontend e backend  
+- Processar arquivos CSV com milhares de registros
+- Consolidar e agrupar eventos por placa
+- Permitir análise por tipo de comunicação
+- Filtrar dados por período
+- Lidar com múltiplos CSVs da mesma placa com datas distintas
+- Exibir os dados de forma clara, interativa e estratégica
+- Evitar sobrecarga visual em gráficos com muitos dados
+- Demonstrar integração real entre frontend e backend
 - Simular um cenário profissional de análise e validação de cobranças
 
 ---
 
 ## 🖥️ Funcionalidades
 
+📂 Processamento de Arquivos
 - Upload de **múltiplos arquivos CSV**
 - Processamento backend com **Spring Boot**
+- Consolidação automática de dados
+- Tratamento de arquivos com:
+  - Mesma placa
+  - Datas diferentes
+  - Grandes volumes de registros
 - Agrupamento de dados por **placa**
 - Filtro dinâmico por placa
 - **Tabela completa** com todos os eventos
@@ -43,17 +55,43 @@ Ele resolve um problema comum em ambientes de monitoramento e telecomunicações
 
 ---
 
+🔎 Filtros Inteligentes
+
+Após o processamento, é possível filtrar os dados por:
+🚗 Placa
+📡 Tipo de Comunicação
+  - Satélite
+  - GPRS
+  - Em memória
+📅 Período (data inicial e final)
+  💡 Mesmo que existam múltiplos CSVs com a mesma placa em datas diferentes, o sistema consolida corretamente e permite análise segmentada por período.
+
+---
+
+📊 Visualização de Dados
+
+📌 Cards de resumo
+📋 Tabela completa com todos os eventos
+📈 Gráfico de barras (Top 15 eventos) com limitação inteligente
+- Destaque de evento ao clicar na tabela
+- Filtro dinâmico refletido automaticamente no gráfico
+- Proteção contra quebra de layout com grandes volumes de dados
+- Interface responsiva com tema dark neon
+
+---
+
 ## 🧠 Conceitos Aplicados
 
-- Integração Frontend ↔ Backend (REST API)
-- Upload de arquivos com `MultipartFile`
-- Tratamento de grandes volumes de dados
+- Integração Frontend ↔ Backend via API REST
+- Upload de arquivos com MultipartFile
 - Manipulação e agregação de dados no backend
-- Renderização dinâmica no frontend
-- Visualização de dados com **Chart.js**
+- Consolidação de múltiplos arquivos simultâneos
+- Filtros dinâmicos com atualização de estado no frontend
+- Renderização dinâmica via manipulação do DOM
+- Visualização de dados com Chart.js
 - Boas práticas de UX para gráficos extensos
-- Controle de estado no JavaScript puro
-- Simular um cenário profissional de análise e validação de cobranças
+- Estruturação modular de projeto
+- Simulação de cenário real de validação técnica
 
 ---
 
@@ -72,8 +110,9 @@ Ele resolve um problema comum em ambientes de monitoramento e telecomunicações
 - Spring Boot
 - Spring Web
 - Upload de arquivos multipart
+- Docker
 - API REST
-- Deploy em nuvem com Docker
+- Deploy em nuvem (Render)
 
 ---
 
@@ -83,10 +122,12 @@ Ele resolve um problema comum em ambientes de monitoramento e telecomunicações
 📁 frontend
  ├── index.html
  ├── style.css
- └── script.js
+ ├── script.js
+ └── assets/
+      └── libs/
 
 📁 backend
- ├── src
+ ├── src/
  │   ├── controller
  │   ├── service
  │   └── model
@@ -135,22 +176,26 @@ Frontend
    - Vercel
 - O frontend consome diretamente a API publicada no Render
 
+
 ---
 
-📊 Visualização de Dados
+📊 Lógica de Visualização
 
-- O gráfico exibe apenas os Top 15 eventos, evitando quebra de layout
-- A tabela mantém 100% dos dados
-- Ao clicar em um evento da tabela:
+- O gráfico exibe apenas os Top 15 eventos, evitando poluição visual
+- A tabela mantém 100% dos dados processados
+- Ao clicar em um evento na tabela:
   - O gráfico é filtrado automaticamente
-  - A linha fica destacada
+  - A linha recebe destaque visual
+- Os filtros de placa, comunicação e período recalculam os dados dinamicamente
 
 ---
 
 📦 Exportações
 
-- Excel: Exporta todos os eventos processados
-- PDF: Gera relatório simples com os dados consolidados
+📊 Excel (.xlsx)
+Exporta todos os eventos conforme os filtros aplicados.
+📄 PDF
+Gera relatório consolidado com os dados analisados.
 
 ---
 
@@ -166,6 +211,8 @@ Possíveis expansões futuras:
 - Histórico de análises
 - Monitoramento e métricas
 - CI/CD automatizado
+- Dashboard administrativo
+- Versionamento de relatórios
 
 ---
 
