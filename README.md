@@ -8,11 +8,16 @@ O sistema permite enviar múltiplos CSVs, agrupar dados por **placa**, gerar **g
 
 ## 🚀 Visão Geral
 
-Este projeto foi desenvolvido com foco em: 
+Este projeto foi desenvolvido com foco em:
+
   🔎 Análise de grandes volumes de dados
+  
   📊 Visualização clara e estratégica de informações
+  
   🔗 Integração completa entre frontend e backend (API REST)
+  
   📡 Validação técnica de excedente satelital
+  
 Ele resolve um problema comum em ambientes de monitoramento e telecomunicações:  
 ➡️ **identificar, organizar e analisar eventos excedentes de forma rápida e visual**.
 
