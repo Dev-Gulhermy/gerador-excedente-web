@@ -67,12 +67,17 @@ Ele resolve um problema comum em ambientes de monitoramento e telecomunicações
 🔎 Filtros Inteligentes
 
 Após o processamento, é possível filtrar os dados por:
+
 🚗 Placa
+
 📡 Tipo de Comunicação
+
   - Satélite
   - GPRS
   - Em memória
+  
 📅 Período (data inicial e final)
+
   💡 Mesmo que existam múltiplos CSVs com a mesma placa em datas diferentes, o sistema consolida corretamente e permite análise segmentada por período.
 
 ---
@@ -80,8 +85,11 @@ Após o processamento, é possível filtrar os dados por:
 📊 Visualização de Dados
 
 📌 Cards de resumo
+
 📋 Tabela completa com todos os eventos
+
 📈 Gráfico de barras (Top 15 eventos) com limitação inteligente
+
 - Destaque de evento ao clicar na tabela
 - Filtro dinâmico refletido automaticamente no gráfico
 - Proteção contra quebra de layout com grandes volumes de dados
@@ -212,7 +220,9 @@ Gera relatório consolidado com os dados analisados.
 📌 Status do Projeto
 
 ✅ Funcional
+
 🚀 Em produção
+
 🔧 Em constante evolução
 
 Possíveis expansões futuras:
