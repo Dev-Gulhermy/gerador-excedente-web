@@ -1,6 +1,5 @@
 package com.geradorexcedente.monitoring;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -11,8 +10,11 @@ public class WarmupController {
 
     /* evitar cold start */
 
-    @Autowired
-    private UsuarioDAO usuarioDAO;
+    private final UsuarioDAO usuarioDAO;
+
+    WarmupController(UsuarioDAO usuarioDAO) {
+        this.usuarioDAO = usuarioDAO;
+    }
 
     @GetMapping("/warmup")
     public String warmup() {

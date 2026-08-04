@@ -74,7 +74,7 @@ public class ExcedenteService {
             LocalDateTime dataInicio = null;
             LocalDateTime dataFim = null;
 
-            Map<String, EventoInfo> contagem = new HashMap<>();
+            Map<EventoKey, EventoInfo> contagem = new HashMap<>();
             String placa = null;
             int total = 0;
 
@@ -163,11 +163,32 @@ public class ExcedenteService {
                             teleevento,
                             dataEvento.format(FORMATTER_CSV)));
 
+                    // ===================================
+                    // TESTE COMUNICAÇÂO SATELITE
+                    //====================================
+                    if (teleevento.equals("Posição Automática")) {
+                        System.out.println(
+                            teleevento + " -> " + comunicacao
+                        );
+                    }
+
+
                     // ===============================
                     // CONTAGEM
                     // ===============================
-                    contagem.putIfAbsent(teleevento, new EventoInfo(comunicacao));
-                    contagem.get(teleevento).qtd++;
+                    
+
+EventoKey chave = new EventoKey(
+        teleevento,
+        comunicacao
+);
+
+contagem.putIfAbsent(
+        chave,
+        new EventoInfo()
+);
+
+contagem.get(chave).qtd++;
                     total++; // 🔥 ADICIONE ISSO
                 }
 
@@ -182,8 +203,11 @@ public class ExcedenteService {
                     placa = limpar(colunas[0]);
                     String evento = limpar(colunas[1]);
 
-                    contagem.putIfAbsent(evento, new EventoInfo("N/A"));
-                    contagem.get(evento).qtd++;
+                    EventoKey chave = new EventoKey(evento, "N/A");
+
+contagem.putIfAbsent(chave, new EventoInfo());
+
+contagem.get(chave).incrementar();
                 }
             }
             // ============================================================
@@ -233,7 +257,7 @@ public class ExcedenteService {
     private ResultadoDTO montarResultado(
             String placa,
             int total,
-            Map<String, EventoInfo> contagem, // 🔥 ALTERADO
+            Map<EventoKey, EventoInfo> contagem, // 🔥 ALTERADO
             List<EventoTimelineDTO> timeline, // 👈 NOVO
             String dataInicio,
             String dataFim,
@@ -242,19 +266,20 @@ public class ExcedenteService {
 
         List<EventoDTO> eventos = new ArrayList<>();
 
-        for (var entry : contagem.entrySet()) {
+        for (Map.Entry<EventoKey, EventoInfo> entry : contagem.entrySet()) {
 
-            EventoInfo info = entry.getValue();
+    EventoKey key = entry.getKey();
+    EventoInfo info = entry.getValue();
 
-            double percentual = (info.qtd * 100.0) / total;
+    double percentual = entry.getValue().getQtd() * 100.0 / total;
 
-            eventos.add(new EventoDTO(
-                    entry.getKey(),
-                    info.qtd,
-                    percentual,
-                    info.comunicacao // 🔥 AGORA VAI
-            ));
-        }
+    eventos.add(new EventoDTO(
+            key.getTeleevento(),
+            info.qtd,
+            percentual,
+            key.getComunicacao()
+    ));
+}
 
         // Ordena do maior para o menor
         eventos.sort((a, b) -> Integer.compare(b.getQtd(), a.getQtd()));
@@ -318,18 +343,55 @@ public class ExcedenteService {
         };
     }
 
+    private static class EventoKey {
+
+    private final String teleevento;
+    private final String comunicacao;
+
+    EventoKey(String teleevento, String comunicacao) {
+        this.teleevento = teleevento;
+        this.comunicacao = comunicacao;
+    }
+
+    public String getTeleevento() {
+        return teleevento;
+    }
+
+    public String getComunicacao() {
+        return comunicacao;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof EventoKey other)) return false;
+
+        return Objects.equals(teleevento, other.teleevento)
+                && Objects.equals(comunicacao, other.comunicacao);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(teleevento, comunicacao);
+    }
+}
+
     // ============================================================
     // CLASSE AUXILIAR PARA AGRUPAMENTO
     // ============================================================
     private static class EventoInfo {
-        int qtd;
-        String comunicacao;
 
-        EventoInfo(String comunicacao) {
-            this.qtd = 0;
-            this.comunicacao = comunicacao;
-        }
+    private int qtd;
+
+    public void incrementar() {
+        qtd++;
     }
+
+    public int getQtd() {
+        return qtd;
+    }
+}
+
 
     // ============================================================
     // LIMPEZA DE CAMPOS

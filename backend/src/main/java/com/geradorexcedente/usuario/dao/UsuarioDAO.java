@@ -1,6 +1,5 @@
 package com.geradorexcedente.usuario.dao;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -22,8 +21,11 @@ public class UsuarioDAO {
      * - Código limpo e performático
      */
 
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
+    private final JdbcTemplate jdbcTemplate;
+
+    UsuarioDAO(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
 
     // ===================================
     // 🔒 MÉTODO INTERNO (PROTEÇÃO PERFIL)
@@ -62,6 +64,7 @@ public class UsuarioDAO {
             usuario.setEmail(rs.getString("email"));
             usuario.setSenhaHash(rs.getString("senha_hash"));
             usuario.setAtivo(rs.getBoolean("ativo"));
+            usuario.setTokenVersion(rs.getInt("token_version"));
 
             // 🔐 Conversão segura
             usuario.setPerfil(mapPerfil(rs.getString("perfil")));
@@ -80,6 +83,162 @@ public class UsuarioDAO {
         }, email);
 
         return lista.isEmpty() ? null : lista.get(0);
+    }
+
+    // ===================================
+    // 🔍 BUSCAR POR ID
+    // ===================================
+    public Usuario buscarPorId(Long id) {
+
+        String sql = """
+                SELECT *
+                FROM usuarios
+                WHERE id = ?
+                """;
+
+        List<Usuario> lista = jdbcTemplate.query(sql, (rs, rowNum) -> {
+
+            Usuario usuario = new Usuario();
+
+            usuario.setId(rs.getLong("id"));
+            usuario.setNome(rs.getString("nome"));
+            usuario.setEmail(rs.getString("email"));
+            usuario.setSenhaHash(rs.getString("senha_hash"));
+
+            usuario.setAtivo(rs.getBoolean("ativo"));
+            usuario.setTokenVersion(rs.getInt("token_version"));
+            usuario.setOnline(rs.getBoolean("online"));
+
+            // 🔐 Conversão segura
+            usuario.setPerfil(mapPerfil(rs.getString("perfil")));
+
+            Timestamp ts = rs.getTimestamp("ultimo_acesso");
+
+            if (ts != null) {
+                usuario.setUltimoAcesso(ts.toLocalDateTime());
+            }
+
+            Timestamp bloqueado = rs.getTimestamp("bloqueado_ate");
+
+            if (bloqueado != null) {
+                usuario.setBloqueadoAte(
+                        bloqueado.toLocalDateTime());
+            }
+
+            return usuario;
+
+        }, id);
+
+        return lista.isEmpty() ? null : lista.get(0);
+    }
+
+    // ===================================
+    // 👑 ATUALIZAR PERFIL
+    // ===================================
+    public void atualizarPerfil(Long id, Role perfil) {
+
+        String sql = """
+                UPDATE usuarios
+                SET perfil = ?
+                WHERE id = ?
+                """;
+
+        jdbcTemplate.update(
+                sql,
+                perfil.name(),
+                id);
+    }
+
+    // ===================================
+    // 🔒 LISTAR BLOQUEADOS
+    // ===================================
+    public List<Usuario> listarBloqueados() {
+
+        String sql = """
+                SELECT *
+                FROM usuarios
+                WHERE bloqueado_ate IS NOT NULL
+                AND bloqueado_ate > NOW()
+                """;
+
+        return jdbcTemplate.query(sql, (rs, rowNum) -> {
+
+            Usuario u = new Usuario();
+
+            u.setId(rs.getLong("id"));
+            u.setNome(rs.getString("nome"));
+            u.setEmail(rs.getString("email"));
+
+            u.setPerfil(mapPerfil(rs.getString("perfil")));
+
+            Timestamp bloqueado = rs.getTimestamp("bloqueado_ate");
+
+            if (bloqueado != null) {
+                u.setBloqueadoAte(
+                        bloqueado.toLocalDateTime());
+            }
+
+            return u;
+        });
+    }
+
+    // ===================================
+    // 📊 TOTAL USUÁRIOS
+    // ===================================
+    public int totalUsuarios() {
+
+        String sql = "SELECT COUNT(*) FROM usuarios";
+
+        return jdbcTemplate.queryForObject(
+                sql,
+                Integer.class);
+    }
+
+    // ===================================
+    // 🟢 TOTAL ONLINE
+    // ===================================
+    public int totalOnline() {
+
+        String sql = """
+                SELECT COUNT(*)
+                FROM usuarios
+                WHERE online = true
+                """;
+
+        return jdbcTemplate.queryForObject(
+                sql,
+                Integer.class);
+    }
+
+    // ===================================
+    // 🔐 INCREMENTAR TOKEN VERSION
+    // ===================================
+    public void incrementarTokenVersion(Long id) {
+
+        String sql = """
+                UPDATE usuarios
+                SET token_version = token_version + 1
+                WHERE id = ?
+                """;
+
+        jdbcTemplate.update(sql, id);
+    }
+
+    // ===================================
+    // 🔒 TOTAL BLOQUEADOS
+    // ===================================
+    public int totalBloqueados() {
+
+        String sql = """
+                SELECT COUNT(*)
+                FROM usuarios
+                WHERE bloqueado_ate IS NOT NULL
+                AND bloqueado_ate > NOW()
+                """;
+
+        return jdbcTemplate.queryForObject(
+                sql,
+                Integer.class);
     }
 
     // ===================================
@@ -120,7 +279,8 @@ public class UsuarioDAO {
                     tentativas_login = ?,
                     bloqueado_ate = ?,
                     online = ?,
-                    ultimo_acesso = ?
+                    ultimo_acesso = ?,
+                    token_version = ?
                 WHERE id = ?
                 """;
 
@@ -133,6 +293,7 @@ public class UsuarioDAO {
                 usuario.getBloqueadoAte(),
                 usuario.getOnline(),
                 usuario.getUltimoAcesso(),
+                usuario.getTokenVersion(),
                 usuario.getId());
     }
 

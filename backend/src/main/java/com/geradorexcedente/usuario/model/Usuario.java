@@ -38,6 +38,10 @@ public class Usuario implements UserDetails {
 
     private Role perfil; // MASTER ou USER
 
+    private Integer tokenVersion;
+    private String lastLoginIp;
+    private String lastUserAgent;
+
     // ===============================
     // 🔐 USERDETAILS (SPRING SECURITY)
     // ===============================
@@ -169,5 +173,29 @@ public class Usuario implements UserDetails {
 
     public void setPerfil(Role perfil) {
         this.perfil = perfil;
+    }
+
+    public Integer getTokenVersion() {
+        return tokenVersion;
+    }
+
+    public void setTokenVersion(Integer tokenVersion) {
+        this.tokenVersion = tokenVersion;
+    }
+
+    public String getLastLoginIp() {
+        return lastLoginIp;
+    }
+
+    public void setLastLoginip(String lastLoginIp) {
+        this.lastLoginIp = lastLoginIp;
+    }
+
+    public String getLastUserAgent() {
+        return lastUserAgent;
+    }
+
+    public void setLastUserAgent(String lastUserAgent) {
+        this.lastUserAgent = lastUserAgent;
     }
 }

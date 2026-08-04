@@ -3,7 +3,6 @@ package com.geradorexcedente.usuario.service;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -26,14 +25,17 @@ public class UsuarioService {
      * =============================================
      */
 
-    @Autowired
-    private BCryptPasswordEncoder passwordEncoder;
+    private final BCryptPasswordEncoder passwordEncoder;
 
-    @Autowired
-    private UsuarioDAO usuarioDAO;
+    private final UsuarioDAO usuarioDAO;
 
-    @Autowired
-    private JwtUtil jwtUtil;
+    private final JwtUtil jwtUtil;
+
+    UsuarioService(JwtUtil jwtUtil, UsuarioDAO usuarioDAO, BCryptPasswordEncoder passwordEncoder) {
+        this.jwtUtil = jwtUtil;
+        this.usuarioDAO = usuarioDAO;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     // ===================================
     // 💾 SALVAR USUÁRIO
@@ -151,8 +153,8 @@ public class UsuarioService {
             usuarioDAO.atualizar(usuario);
 
             // 🔐 TOKENS
-            String accessToken = jwtUtil.generateToken(usuario.getEmail());
-            String refreshToken = jwtUtil.generateRefreshToken(usuario.getEmail());
+            String accessToken = jwtUtil.generateToken(usuario);
+            String refreshToken = jwtUtil.generateRefreshToken(usuario);
 
             return new LoginResponseDTO(
                     accessToken,

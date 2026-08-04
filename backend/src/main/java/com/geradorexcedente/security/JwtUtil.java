@@ -3,6 +3,9 @@ package com.geradorexcedente.security;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Component;
+
+import com.geradorexcedente.usuario.model.Usuario;
+
 import org.springframework.beans.factory.annotation.Value;
 
 import java.security.Key;
@@ -26,6 +29,9 @@ public class JwtUtil {
     @Value("${jwt.expiration}")
     private long expiration;
 
+    @Value("${jwt.refresh-expiration}")
+    private long refreshExpiration;
+
     // 🔐 chave segura
     private Key getSigningKey() {
         return Keys.hmacShaKeyFor(secret.getBytes());
@@ -34,11 +40,17 @@ public class JwtUtil {
     // =============================================
     // 🔐 ACCESS TOKEN
     // =============================================
-    public String generateToken(String email) {
+    public String generateToken(Usuario usuario) {
         return Jwts.builder()
-                .setSubject(email) // 🔥 padrão único (email)
+                // 👤 IDENTIDADE PRINCIPAL
+                .setSubject(usuario.getEmail())
+                // 🔥 TOKEN VERSION
+                .claim("tokenVersion", usuario.getTokenVersion())
+                // ⏰ DATA EMISSÃO
                 .setIssuedAt(new Date())
+                // ⏰ EXPIRAÇÃO
                 .setExpiration(new Date(System.currentTimeMillis() + expiration))
+                // 🔐 ASSINATURA
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -46,11 +58,12 @@ public class JwtUtil {
     // =============================================
     // 🔁 REFRESH TOKEN
     // =============================================
-    public String generateRefreshToken(String email) {
+    public String generateRefreshToken(Usuario usuario) {
         return Jwts.builder()
-                .setSubject(email)
+                .setSubject(usuario.getEmail())
+                .claim("tokenVersion", usuario.getTokenVersion())
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 1000L * 60 * 60 * 24 * 7))
+                .setExpiration(new Date(System.currentTimeMillis() + refreshExpiration))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -60,6 +73,14 @@ public class JwtUtil {
     // =============================================
     public String extrairEmail(String token) {
         return getClaims(token).getSubject();
+    }
+
+    // =============================================
+    // 📌 EXTRAIR TOKEN VERSION
+    // =============================================
+    public Integer extrairTokenVersion(String token) {
+        Claims claims = getClaims(token);
+        return claims.get("tokenVersion", Integer.class);
     }
 
     // =============================================

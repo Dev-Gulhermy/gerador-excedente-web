@@ -1,51 +1,173 @@
 package com.geradorexcedente.security;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import org.springframework.http.HttpMethod;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+
+import org.springframework.security.config.http.SessionCreationPolicy;
 
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfigurationSource;
 
-import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.web.cors.CorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Autowired
-    private JwtFilter jwtFilter;
+        private final JwtFilter jwtFilter;
 
-    @Autowired
-    private CorsConfigurationSource corsConfigurationSource;
+        private final RateLimitFilter rateLimitFilter;
 
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        private final CorsConfigurationSource corsConfigurationSource;
 
-        http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource)) // 🔥 AQUI
-                .csrf(csrf -> csrf.disable())
-                .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        SecurityConfig(CorsConfigurationSource corsConfigurationSource, RateLimitFilter rateLimitFilter,
+                        JwtFilter jwtFilter) {
+                this.corsConfigurationSource = corsConfigurationSource;
+                this.rateLimitFilter = rateLimitFilter;
+                this.jwtFilter = jwtFilter;
+        }
 
-                .authorizeHttpRequests(auth -> auth
+        @Bean
+        public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
-                        .requestMatchers("/auth/login", "/auth/refresh").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/usuario").permitAll()
-                        .requestMatchers("/usuario/**").authenticated()
-                        .requestMatchers("/health", "/warmup").permitAll()
-                        .requestMatchers("/api/excedente/**").authenticated()
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/error").permitAll()
+                http
 
-                        .anyRequest().authenticated())
+                                // =========================================
+                                // 🌍 CORS
+                                // =========================================
+                                .cors(cors -> cors.configurationSource(
+                                                corsConfigurationSource))
 
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+                                // =========================================
+                                // 🔥 CSRF DESABILITADO
+                                // =========================================
+                                /*
+                                 * API Stateless com JWT
+                                 *
+                                 * Não utiliza sessão HTTP.
+                                 *
+                                 * Portanto:
+                                 * CSRF não é necessário.
+                                 */
+                                .csrf(csrf -> csrf.disable())
 
-        return http.build();
-    }
+                                // =========================================
+                                // 🔐 SESSÃO STATELESS
+                                // =========================================
+                                .sessionManagement(sess -> sess.sessionCreationPolicy(
+                                                SessionCreationPolicy.STATELESS))
+
+                                // =========================================
+                                // 🛡 SECURITY HEADERS
+                                // =========================================
+                                .headers(headers -> headers
+
+                                                /*
+                                                 * =====================================
+                                                 * CSP (CONTENT SECURITY POLICY)
+                                                 * =====================================
+                                                 *
+                                                 * Define quais recursos o navegador
+                                                 * pode carregar.
+                                                 *
+                                                 * default-src 'self'
+                                                 *
+                                                 * Permite apenas recursos do
+                                                 * próprio domínio.
+                                                 *
+                                                 * Protege contra:
+                                                 * - XSS
+                                                 * - Scripts maliciosos
+                                                 * - Injeções externas
+                                                 */
+                                                .contentSecurityPolicy(csp -> csp.policyDirectives(
+                                                                "default-src 'self'"))
+
+                                                /*
+                                                 * =====================================
+                                                 * FRAME OPTIONS
+                                                 * =====================================
+                                                 *
+                                                 * Protege contra:
+                                                 * - CLICKJACKING
+                                                 *
+                                                 * SAMEORIGIN:
+                                                 * permite iframe apenas do
+                                                 * mesmo domínio.
+                                                 */
+                                                .frameOptions(frame -> frame.sameOrigin())
+
+                                                /*
+                                                 * =====================================
+                                                 * X-XSS-PROTECTION
+                                                 * =====================================
+                                                 *
+                                                 * Header legado.
+                                                 *
+                                                 * Navegadores modernos ignoram.
+                                                 *
+                                                 * Spring recomenda desabilitar.
+                                                 */
+                                                .xssProtection(xss -> xss.disable())
+
+                                                /*
+                                                 * =====================================
+                                                 * HSTS
+                                                 * =====================================
+                                                 *
+                                                 * Obriga HTTPS.
+                                                 *
+                                                 * Protege contra:
+                                                 * - MITM
+                                                 * - Downgrade HTTP
+                                                 *
+                                                 * maxAge:
+                                                 * 31536000 = 1 ano
+                                                 */
+                                                .httpStrictTransportSecurity(hsts -> hsts
+
+                                                                .includeSubDomains(true)
+
+                                                                .maxAgeInSeconds(31536000)))
+
+                                // =========================================
+                                // 🔐 AUTORIZAÇÃO
+                                // =========================================
+                                .authorizeHttpRequests(auth -> auth
+                                                // 🔓 públicas
+                                                .requestMatchers("/auth/login", "/auth/refresh").permitAll()
+                                                .requestMatchers("/auth/check-auth").authenticated()
+                                                .requestMatchers(HttpMethod.POST, "/usuario").permitAll()
+                                                .requestMatchers("/health", "/warmup").permitAll()
+                                                .requestMatchers("/error").permitAll()
+                                                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                                                // 👑 MASTER
+                                                .requestMatchers("/api/master/**").hasRole("MASTER")
+                                                // 🔐 autenticadas
+                                                .requestMatchers("/usuario/**").authenticated()
+                                                .requestMatchers("/api/excedente/**").authenticated()
+                                                .anyRequest()
+                                                .authenticated())
+
+                                // =========================================
+                                // 🚦 RATE LIMIT
+                                // =========================================
+                                .addFilterBefore(
+                                                rateLimitFilter,
+                                                UsernamePasswordAuthenticationFilter.class)
+
+                                // =========================================
+                                // 🔑 JWT
+                                // =========================================
+                                .addFilterBefore(
+                                                jwtFilter,
+                                                UsernamePasswordAuthenticationFilter.class);
+
+                return http.build();
+        }
 }

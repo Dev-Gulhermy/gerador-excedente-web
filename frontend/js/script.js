@@ -1,4 +1,3 @@
-
 // ===============================
 // 📦 ESTADO GLOBAL
 // ===============================
@@ -22,6 +21,9 @@ let chartPizza = null; // 🔥 NOVO
 
 let chartLinha = null;
 
+// =============================
+let aplicandoFiltro = false;
+
 // ===============================
 // 🧠 CACHE INTELIGENTE (NOVO)
 // ===============================
@@ -35,7 +37,6 @@ const cacheFiltros = new Map();
 const { jsPDF } = window.jspdf;
 
 let datasetSelecionado = null;
-
 
 //====================================================================
 
@@ -53,7 +54,6 @@ if (statusSalvo) {
 // 🆕 DEFINIR STATUS (BOTÕES)
 // ==============================================
 function definirStatus(tipo) {
-
   if (!placaAtual) {
     alert("Selecione uma placa primeiro");
     return;
@@ -74,7 +74,6 @@ function definirStatus(tipo) {
 // 🆕 ATUALIZA BOTÕES VISUALMENTE
 // ==============================================
 function atualizarBotoesStatus() {
-
   const btnApto = document.getElementById("btnApto");
   const btnNaoApto = document.getElementById("btnNaoApto");
 
@@ -89,19 +88,15 @@ function atualizarBotoesStatus() {
   if (status === "NAO_APTO") btnNaoApto.classList.add("ativo");
 
   atualizarStatusTopo();
-
 }
 
 function filtrarPorComunicacao(dados, tipo) {
-
   if (!tipo || tipo === "TODOS") return dados;
 
-  return dados.filter(e =>
-    e.comunicacao?.toUpperCase().includes(tipo.toUpperCase())
+  return dados.filter((e) =>
+    e.comunicacao?.toUpperCase().includes(tipo.toUpperCase()),
   );
 }
-
-
 
 //=============================================================
 
@@ -121,23 +116,19 @@ function formatarData(data) {
       month: "2-digit",
       year: "numeric",
       hour: "2-digit",
-      minute: "2-digit"
+      minute: "2-digit",
     });
-
   } catch {
     return data;
   }
 }
-
 
 // ==============================================
 // 🚀 ENVIO CSV (COM CONTROLE DE UI + BLOQUEIO)
 // (APENAS DISPARA PROCESSAMENTO)
 // ==============================================
 async function enviar() {
-
   const input = document.getElementById("csvFile");
-
 
   // ===============================
   // 🔒 ELEMENTOS DE CONTROLE UI
@@ -156,10 +147,11 @@ async function enviar() {
   }
 
   const files = [...input.files];
-  const comunicacao = (document.getElementById("filtroComunicacao").value || "").toUpperCase();
+  const comunicacao = (
+    document.getElementById("filtroComunicacao").value || ""
+  ).toUpperCase();
 
   try {
-
     // ===============================
     // 🔒 BLOQUEIA BOTÃO (ANTI-SPAM)
     // ===============================
@@ -184,26 +176,22 @@ async function enviar() {
     await processarArquivos(
       files,
       comunicacao,
-      true,   // limpa tudo no upload inicial
+      true, // limpa tudo no upload inicial
       null,
-      3       // concorrência
+      3, // concorrência
     );
 
     // ===============================
     // ✅ FINALIZAÇÃO COM SUCESSO
     // ===============================
     textoBtn.textContent = "Processar CSV";
-
   } catch (erro) {
-
     // ===============================
     // ❌ TRATAMENTO DE ERRO
     // ===============================
     console.error("Erro no envio:", erro);
     textoBtn.textContent = "Erro";
-
   } finally {
-
     // ===============================
     // 🔓 LIBERA BOTÃO (SEMPRE EXECUTA)
     // ===============================
@@ -223,97 +211,119 @@ async function enviar() {
 // 🎯 FILTRO FRONTEND (GLOBAL FIX)
 // ===============================
 function aplicarFiltrosFrontend() {
-
-  if (!placaAtual) return;
-
-  cacheFiltros.clear();
-
-  const comunicacao = (document.getElementById("filtroComunicacao").value || "").toUpperCase();
-  const periodoIndex = document.getElementById("filtroPeriodo").value;
-
-  const chaveCache = JSON.stringify({
-    placa: placaAtual,
-    comunicacao,
-    periodoIndex
-  });
-
-  if (cacheFiltros.has(chaveCache)) {
-    renderizar(cacheFiltros.get(chaveCache));
+  console.log(
+    "CACHE",
+    JSON.parse(JSON.stringify(cacheResultadosProcessados[placaAtual])),
+  );
+  if (!cacheResultadosProcessados[placaAtual]?.length) {
+    console.warn("⚠️ Sem dados para placa atual");
     return;
   }
 
-  let dadosOriginais = cacheResultadosProcessados[placaAtual] || [];
+  console.count("aplicarFiltrosFrontend"); // 👈 AQUI
 
-  let dados = [...dadosOriginais];
+  // 🔒 trava anti-loop
+  if (aplicandoFiltro) return;
 
-  // ===============================
-  // 🔥 FILTRO COMUNICAÇÃO (ROBUSTO)
-  // ===============================
-  if (comunicacao) {
+  aplicandoFiltro = true;
+  try {
+    // ===============================
+    // 🔽 SEU CÓDIGO ORIGINAL (INTEIRO)
+    // ===============================
 
-    dados = dados.map(d => {
+    if (!placaAtual) return;
 
-      // filtra eventos dentro do resultado
-      const eventosFiltrados = d.eventos.filter(e =>
-        (e.comunicacao || "").toUpperCase().includes(comunicacao)
-      );
+    const comunicacao = (
+      document.getElementById("filtroComunicacao").value || ""
+    ).toUpperCase();
+    const periodoIndex = document.getElementById("filtroPeriodo").value;
 
-      return {
-        ...d,
-        eventos: eventosFiltrados
-      };
+    const chaveCache = JSON.stringify({
+      placa: placaAtual,
+      comunicacao,
+      periodoIndex,
+      eventoSelecionado, // 🔥 ESSENCIAL
+      tamanho: (cacheResultadosProcessados[placaAtual] || []).length, // 🔥 NOVO
+    });
 
-    }).filter(d => d.eventos.length > 0); // remove resultados vazios
+    if (cacheFiltros.has(chaveCache)) {
+      renderizar(cacheFiltros.get(chaveCache));
+      return;
+    }
 
-    // 🚨 fallback inteligente (não quebra UI)
-    if (!dados.length) {
-      console.warn("⚠️ Nenhum dado com esse filtro de comunicação");
+    let dadosOriginais = cacheResultadosProcessados[placaAtual] || [];
+
+    let dados = [...dadosOriginais];
+
+    // ===============================
+    // 🔥 FILTRO COMUNICAÇÃO (ROBUSTO)
+    // ===============================
+    if (comunicacao) {
+      dados = dados
+        .map((d) => {
+          // filtra eventos dentro do resultado
+          const eventosFiltrados = d.eventos.filter((e) =>
+            (e.comunicacao || "").toUpperCase().includes(comunicacao),
+          );
+
+          return {
+            ...d,
+            eventos: eventosFiltrados,
+          };
+        })
+        .filter((d) => d.eventos.length > 0); // remove resultados vazios
+
+      // 🚨 fallback inteligente (não quebra UI)
+      if (!dados.length) {
+        console.warn("⚠️ Nenhum dado com esse filtro de comunicação");
+        dados = [];
+      }
+    }
+
+    // ===============================
+    // 📅 FILTRO PERÍODO
+    // ===============================
+    if (periodoIndex !== "" && dados[periodoIndex]) {
+      dados = [dados[periodoIndex]];
+    } else if (periodoIndex !== "") {
+      console.warn("⚠️ Índice de período inválido após filtro");
       dados = [];
     }
+
+    // ===============================
+    // 🚨 PROTEÇÃO CONTRA VAZIO
+    // ===============================
+    if (!dados.length) {
+      renderizar({
+        placa: placaAtual,
+        total: 0,
+        eventos: [],
+        dataInicio: null,
+        dataFim: null,
+        nomeArquivo: "-",
+        intervaloTransmissao: "-",
+      });
+      return;
+    }
+
+    const resultado = agruparEventos(dados);
+
+    cacheFiltros.set(chaveCache, resultado);
+
+    renderizar(resultado);
+  } finally {
+    // Isso evita que o lock seja liberado no mesmo call stack, prevenindo recursão indireta.
+    setTimeout(() => {
+      aplicandoFiltro = false;
+    }, 0); // 🔥 SOLTA FORA DA STACK
   }
-
-  // ===============================
-  // 📅 FILTRO PERÍODO
-  // ===============================
-  if (periodoIndex !== "" && dados[periodoIndex]) {
-    dados = [dados[periodoIndex]];
-  } else if (periodoIndex !== "") {
-    console.warn("⚠️ Índice de período inválido após filtro");
-    dados = [];
-  }
-
-  // ===============================
-  // 🚨 PROTEÇÃO CONTRA VAZIO
-  // ===============================
-  if (!dados.length) {
-    renderizar({
-      placa: placaAtual,
-      total: 0,
-      eventos: [],
-      dataInicio: null,
-      dataFim: null,
-      nomeArquivo: "-",
-      intervaloTransmissao: "-"
-    });
-    return;
-  }
-
-  const resultado = agruparEventos(dados);
-
-  cacheFiltros.set(chaveCache, resultado);
-
-  renderizar(resultado);
 }
 
 function normalizarComunicacao(valor) {
-  return (valor || "")
-    .toString()
-    .trim()
-    .toUpperCase();
+  return (valor || "").toString().trim().toUpperCase();
 }
 
 function agruparEventos(lista) {
-
   let total = 0;
   const contagem = {};
   const timeline = []; // 🔥 NOVO
@@ -324,7 +334,10 @@ function agruparEventos(lista) {
   let nomeArquivo = "-";
   let intervalo = "-";
 
-  lista.forEach(d => {
+  lista.forEach((d) => {
+    if (!Array.isArray(d.eventos)) return;
+
+    if (!d || typeof d !== "object") return;
 
     nomeArquivo = d.nomeArquivo || nomeArquivo;
     intervalo = d.intervaloTransmissao || intervalo;
@@ -332,32 +345,67 @@ function agruparEventos(lista) {
     if (!dataInicio || d.dataInicio < dataInicio) dataInicio = d.dataInicio;
     if (!dataFim || d.dataFim > dataFim) dataFim = d.dataFim;
 
-    // 🔥 JUNTA TIMELINE
-    if (Array.isArray(d.eventosTimeline)) {
-      timeline.push(...d.eventosTimeline);
+    console.log("d:", d); // 👈 AQUI
+
+    // 🔒 proteção eventos
+    if (!Array.isArray(d.eventos)) {
+      console.error("❌ eventos inválido:", d.eventos);
+      return;
     }
 
+    // 🔍 DETECTA LOOP EM EVENTOS
+    if (d.eventos === d) {
+      console.error("💣 LOOP DETECTADO: eventos aponta pra ele mesmo");
+      return;
+    }
 
-    d.eventos.forEach(e => {
+    if (Array.isArray(d.eventosTimeline)) {
+      for (let i = 0; i < d.eventosTimeline.length; i++) {
+        const item = d.eventosTimeline[i];
+
+        // 🔥 IGNORA estruturas contaminadas
+        if (!item || typeof item !== "object") continue;
+
+        // 💣 BLOQUEIA RECURSÃO OCULTA
+        if (item.eventosTimeline) continue;
+
+        // 💣 BLOQUEIA OBJETO PAI
+        if (item === d) continue;
+
+        // 🔥 LIMITE HARD (proteção real)
+        if (timeline.length > 20000) {
+          console.warn("⚠️ Timeline cortada (limite de segurança)");
+          break;
+        }
+
+        timeline.push({
+          nome: item.nome,
+          data: item.data,
+        });
+      }
+    }
+
+    // 🔁 eventos (mantém como está)
+    d.eventos.forEach((e) => {
+      if (!e || !e.nome) return;
 
       if (!contagem[e.nome]) {
         contagem[e.nome] = {
           qtd: 0,
-          comunicacao: e.comunicacao
+          comunicacao: e.comunicacao,
         };
       }
 
-      contagem[e.nome].qtd += e.qtd;
-      total += e.qtd;
+      contagem[e.nome].qtd += e.qtd || 0;
+      total += e.qtd || 0;
     });
-
   });
 
   const eventos = Object.entries(contagem).map(([nome, info]) => ({
     nome,
     qtd: info.qtd,
     percentual: total ? (info.qtd / total) * 100 : 0,
-    comunicacao: info.comunicacao // 🔥 ESSENCIAL
+    comunicacao: info.comunicacao, // 🔥 ESSENCIAL
   }));
 
   eventos.sort((a, b) => b.qtd - a.qtd);
@@ -370,7 +418,7 @@ function agruparEventos(lista) {
     dataInicio,
     dataFim,
     nomeArquivo,
-    intervaloTransmissao: intervalo
+    intervaloTransmissao: intervalo,
   };
 }
 
@@ -378,14 +426,12 @@ function agruparEventos(lista) {
 // 🌐 API UPLOAD (PADRÃO)
 // ===============================
 async function apiUpload(url, formData) {
-
   const response = await fetchWithAuthRetry(API_BASE + url, {
     method: "POST",
-    body: formData
+    body: formData,
   });
 
   if (!response.ok) {
-
     const status = response.status;
     const text = await response.text();
 
@@ -413,9 +459,8 @@ async function processarArquivos(
   comunicacao,
   limparTudo = false,
   placaFiltro = null,
-  concorrencia = 3
+  concorrencia = 3,
 ) {
-
   if (!listaArquivos.length) {
     console.warn("Nenhum arquivo para processar");
     return;
@@ -437,12 +482,10 @@ async function processarArquivos(
   let index = 0;
   let processados = 0;
 
-
   // ===============================
   // ⚙️ WORKER (NÃO REMOVER)
   // ===============================
   async function worker() {
-
     while (true) {
       let currentIndex;
 
@@ -453,12 +496,18 @@ async function processarArquivos(
       const file = listaArquivos[currentIndex];
 
       try {
-
         const formData = new FormData();
         formData.append("file", file);
         formData.append("comunicacao", comunicacao);
 
         const data = await apiUpload("/api/excedente/processar", formData);
+
+        console.log(data);
+
+        // 🔥 LIMITADOR GLOBAL (aqui é o lugar certo)
+        data.eventosTimeline = Array.isArray(data.eventosTimeline)
+          ? data.eventosTimeline.slice(0, 5000)
+          : [];
 
         // ✅ ATUALIZA PROGRESSO
         processados++;
@@ -478,7 +527,6 @@ async function processarArquivos(
 
         cacheResultadosProcessados[data.placa].push(data);
 
-
         // console.log("CACHE:", cacheResultadosProcessados);
 
         // 🔥 mantém compatibilidade com sistema atual
@@ -495,9 +543,7 @@ async function processarArquivos(
         if (!placaAtual) {
           placaAtual = data.placa;
         }
-
       } catch (err) {
-
         if (err.message === "NAO_AUTENTICADO") {
           alert("Sessão expirada. Faça login novamente.");
           localStorage.clear();
@@ -515,7 +561,6 @@ async function processarArquivos(
     }
   }
 
-
   // ===============================
   // 🚀 CONTROLE DE CONCORRÊNCIA
   // ===============================
@@ -529,44 +574,38 @@ async function processarArquivos(
 
   if (placaAtual) {
     document.getElementById("filtroPlaca").value = placaAtual;
-    trocarPlaca(); // 🔥 força fluxo completo
-    atualizarBotoesStatus(); // 🔥 IMPORTANTE
-    carregarPeriodos();
-  }
 
-  if (placaAtual) {
-    document.getElementById("filtroPlaca").value = placaAtual;
-
+    trocarPlaca(); // já chama carregarPeriodos internamente
     atualizarBotoesStatus();
-    carregarPeriodos();
 
-    // 🔥 GARANTE que existe dado antes de renderizar
-    if (cacheResultadosProcessados[placaAtual]?.length) {
-      aplicarFiltrosFrontend();
-    } else {
-      console.warn("⚠️ Nenhum dado encontrado para a placa:", placaAtual);
-    }
+    // 🔥 executa UMA única vez fora da stack
+    setTimeout(() => {
+      if (placaAtual && cacheResultadosProcessados[placaAtual]?.length) {
+        aplicarFiltrosFrontend();
+      }
+    }, 0);
   }
 }
 
 // ===============================
 // 🔄 FILTROS AGORA SÃO FRONTEND
 // ===============================
-document.getElementById("filtroComunicacao")
-  .addEventListener("change", () => {
-    cacheFiltros.clear();
-    aplicarFiltrosFrontend();
-  });
+document.getElementById("filtroComunicacao").addEventListener("change", () => {
+  cacheFiltros.clear();
+  aplicarFiltrosFrontend();
+});
 
-document.getElementById("filtroPeriodo")
+document
+  .getElementById("filtroPeriodo")
   .addEventListener("change", aplicarFiltrosFrontend);
 
 // ===============================
 // 🔥 PROCESSAR TODOS (BOTÃO)
 // ===============================
 async function processarTodos() {
-
-  const comunicacao = (document.getElementById("filtroComunicacao").value || "").toUpperCase();
+  const comunicacao = (
+    document.getElementById("filtroComunicacao").value || ""
+  ).toUpperCase();
   const arquivos = Object.values(arquivosPorResultado);
 
   if (!arquivos.length) {
@@ -574,36 +613,27 @@ async function processarTodos() {
     return;
   }
 
-  await processarArquivos(
-    arquivos,
-    comunicacao,
-    true,
-    null,
-    3
-  );
+  await processarArquivos(arquivos, comunicacao, true, null, 3);
 }
-
 
 // ===============================
 // 📂 NOME DOS ARQUIVOS
 // ===============================
 document.getElementById("csvFile").addEventListener("change", function () {
-  document.getElementById("nomeArquivos").innerText =
-    [...this.files].map(f => f.name).join(", ");
+  document.getElementById("nomeArquivos").innerText = [...this.files]
+    .map((f) => f.name)
+    .join(", ");
 });
-
 
 // ===============================
 // 🚗 SELECT PLACA (ATUALIZADO)
 // ===============================
 function atualizarSelectPlacas() {
-
   const select = document.getElementById("filtroPlaca");
 
   select.innerHTML = `<option value="">Selecione a placa</option>`;
 
-  Object.keys(resultadosPorPlaca).forEach(placa => {
-
+  Object.keys(resultadosPorPlaca).forEach((placa) => {
     let status = statusPlacas[placa];
     let label = placa;
 
@@ -623,33 +653,47 @@ function atualizarSelectPlacas() {
 // 🔁 TROCAR PLACA
 // ===============================
 function trocarPlaca() {
+  const novaPlaca = document.getElementById("filtroPlaca").value;
 
-  placaAtual = document.getElementById("filtroPlaca").value;
+  // 🚨 evita reprocessamento inútil
+  if (novaPlaca === placaAtual) return;
+
+  placaAtual = novaPlaca;
 
   if (!placaAtual) return;
+
+  // 🔥 RESET CRÍTICO
+  eventoSelecionado = null;
+  datasetSelecionado = null;
+
+  // 💣 LIMPA CACHE (ESSENCIAL)
+  cacheFiltros.clear();
 
   atualizarBotoesStatus();
   carregarPeriodos();
   atualizarStatusTopo();
 
-  // 🔥 NOVO: aplica filtro automaticamente
-  aplicarFiltrosFrontend();
+  // 🚀 FORÇA ATUALIZAÇÃO REAL
+  setTimeout(() => {
+    aplicarFiltrosFrontend();
+  }, 0);
 }
 
 // ===============================
 // 📅 PERÍODOS
 // ===============================
 function carregarPeriodos() {
-
   const select = document.getElementById("filtroPeriodo");
   select.innerHTML = `<option value="">Todos os períodos</option>`;
 
-  const comunicacao = (document.getElementById("filtroComunicacao").value || "").toUpperCase();
+  const comunicacao = (
+    document.getElementById("filtroComunicacao").value || ""
+  ).toUpperCase();
 
   let lista = cacheResultadosProcessados[placaAtual] || [];
 
   if (comunicacao) {
-    lista = lista.filter(d => {
+    lista = lista.filter((d) => {
       const com = (d.comunicacao || "").toUpperCase().trim();
       return com.includes(comunicacao);
     });
@@ -665,8 +709,6 @@ function carregarPeriodos() {
     `;
   });
 
-  // 🔥 NÃO renderiza direto — usa filtro
-  aplicarFiltrosFrontend();
   // 🔥 CORRETO (case sensitive)
   if (typeof atualizarStatusTopo === "function") {
     atualizarStatusTopo();
@@ -677,7 +719,6 @@ function carregarPeriodos() {
 // 🎯 RENDER
 // ===============================
 function renderizar(d) {
-
   // console.log("resultado final:", d);
   if (!d || !Array.isArray(d.eventos)) {
     console.warn("Dados inválidos para renderização");
@@ -691,12 +732,15 @@ function renderizar(d) {
   // ===============================
   document.getElementById("placa").innerText = d.placa;
   animarNumero(document.getElementById("total"), d.total);
-  document.getElementById("intervalo").innerText = d.intervaloTransmissao || "-";
+  document.getElementById("intervalo").innerText =
+    d.intervaloTransmissao || "-";
 
   const eventosOrdenados = [...d.eventos].sort((a, b) => b.qtd - a.qtd);
 
   if (!eventosOrdenados || !eventosOrdenados.length) {
     console.warn("Sem dados ainda...");
+
+    document.getElementById("principal").innerText = "-";
     return;
   }
 
@@ -706,9 +750,7 @@ function renderizar(d) {
   document.getElementById("periodo").innerText =
     `${formatarData(d.dataInicio)} até ${formatarData(d.dataFim)}`;
 
-  document.getElementById("arquivo").innerText =
-    d.nomeArquivo ?? "-";
-
+  document.getElementById("arquivo").innerText = d.nomeArquivo ?? "-";
 
   // ===============================
   // 📊 TABELA
@@ -717,21 +759,21 @@ function renderizar(d) {
   tbody.innerHTML = "";
 
   eventosOrdenados.forEach((e, i) => {
-
     // ===============================
     // 🎯 CONTROLE DE LINHA ATIVA
     // ===============================
     const ativo = e.nome === eventoSelecionado;
-
 
     // ===============================
     // 🏆 RANKING TOP 3 EVENTOS
     // ===============================
     let ranking = "";
 
-    if (i === 0) ranking = "🥇";       // 1º lugar
-    else if (i === 1) ranking = "🥈";  // 2º lugar
-    else if (i === 2) ranking = "🥉";  // 3º lugar
+    if (i === 0)
+      ranking = "🥇"; // 1º lugar
+    else if (i === 1)
+      ranking = "🥈"; // 2º lugar
+    else if (i === 2) ranking = "🥉"; // 3º lugar
 
     // ===============================
     // 🧾 RENDERIZAÇÃO DA LINHA
@@ -778,7 +820,6 @@ function renderizar(d) {
   `;
   });
 
-
   // ===============================
   // 📈 GRÁFICO (ULTRA EVOLUÍDO)
   // ===============================
@@ -815,7 +856,6 @@ function renderizar(d) {
   // ===============================
   const ctx = document.getElementById("graficoBarras");
 
-
   // =======================================
   // 🎨 GRADIENTE DINÂMICO (PRIMARY → SECONDARY)
   // =======================================
@@ -824,23 +864,24 @@ function renderizar(d) {
 
   // Gradiente vertical (topo → base)
   const gradientBar = ctx2d.createLinearGradient(0, 0, 0, 300);
-  gradientBar.addColorStop(0, "#00e5ff");   // primary
-  gradientBar.addColorStop(1, "#7c3aed");   // secondary
+  gradientBar.addColorStop(0, "#00e5ff"); // primary
+  gradientBar.addColorStop(1, "#7c3aed"); // secondary
 
   // Gradiente horizontal (borda)
   const gradientBorder = ctx2d.createLinearGradient(0, 0, 300, 0);
   gradientBorder.addColorStop(0, "#00e5ff");
   gradientBorder.addColorStop(1, "#7c3aed");
 
-  if (window.ChartDataLabels) {
+  if (window.ChartDataLabels && !window.__datalabelsRegistrado) {
     Chart.register(ChartDataLabels);
+
+    window.__datalabelsRegistrado = true;
   }
 
   // =======================================
   // 🧠 CONTROLE DE HOVER (ANTI FLICKER)
   // =======================================
   if (!ctx.__hoverBound) {
-
     ctx.addEventListener("mouseenter", () => {
       if (window.__glowControl) {
         window.__glowControl.ativo = false;
@@ -857,70 +898,65 @@ function renderizar(d) {
     ctx.__hoverBound = true;
   }
 
-
   // ===============================
   // 🔁 MORPH REAL (SEM DESTROY)
   // ===============================
   if (chartGraf) {
-
     // ===============================
     // 🔄 ATUALIZA DADOS (TRANSIÇÃO SUAVE)
     // ===============================
-    chartGraf.data.labels = eventosGrafBarra.map(e => formatarLabel(e.nome));
-    chartGraf.data.datasets[0].data = eventosGrafBarra.map(e => e.qtd);
+    chartGraf.data.labels = eventosGrafBarra.map((e) => formatarLabel(e.nome));
+    chartGraf.data.datasets[0].data = eventosGrafBarra.map((e) => e.qtd);
 
     // 🔥 aplica gradiente também em updates
-    chartGraf.data.datasets[0].backgroundColor =
-      eventosGrafBarra.map(e =>
-        e.nome === eventoSelecionado
-          ? "#00e5ff"
-          : gradientBar
-      );;
+    chartGraf.data.datasets[0].backgroundColor = eventosGrafBarra.map((e) =>
+      e.nome === eventoSelecionado ? "#00e5ff" : gradientBar,
+    );
     chartGraf.data.datasets[0].borderColor = gradientBorder;
 
     chartGraf.options.plugins.title.text =
       eventoSelecionado || "Top 12 Eventos";
 
     chartGraf.update(); // 🔥 evita recalculo bugado
-
   } else {
-
     // ===============================
     // 🚀 CRIA GRÁFICO APENAS 1 VEZ
     // ===============================
     chartGraf = new Chart(ctx, {
       type: "bar",
       data: {
-        labels: eventosGrafBarra.map(e => formatarLabel(e.nome)),
-        datasets: [{
-          data: eventosGrafBarra.map(e => e.qtd),
+        labels: eventosGrafBarra.map((e) => formatarLabel(e.nome)),
+        datasets: [
+          {
+            data: eventosGrafBarra.map((e) => e.qtd),
 
-          // 🔥 cor inicial (será animada pelo glow)
-          backgroundColor: eventosGrafBarra.map((e, i) => {
-            if (e.nome === eventoSelecionado) return "#00e5ff";
+            // 🔥 cor inicial (será animada pelo glow)
+            backgroundColor: eventosGrafBarra.map((e, i) => {
+              if (e.nome === eventoSelecionado) return "#00e5ff";
 
-            return gradientBar; // mantém o gradiente original
-          }),
-          borderColor: gradientBorder,
-          borderWidth: 1,
-          borderRadius: 6,
-          hoverBorderWidth: 2,
-          hoverBorderColor: "#00e5ff",
-          hitRadius: 12,   // 🔥 aumenta área de interação
-          hoverRadius: 8   // 🔥 suaviza hover
-        }]
+              return gradientBar; // mantém o gradiente original
+            }),
+            borderColor: gradientBorder,
+            borderWidth: 1,
+            borderRadius: 6,
+            hoverBorderWidth: 2,
+            hoverBorderColor: "#00e5ff",
+            hitRadius: 12, // 🔥 aumenta área de interação
+            hoverRadius: 8, // 🔥 suaviza hover
+          },
+        ],
       },
       options: {
         responsive: true,
         maintainAspectRatio: false, // 🔥 necessário para altura fixa
-        events: ['mousemove', 'mouseout', 'click', 'touchstart', 'touchmove'],
+        events: ["mousemove", "mouseout", "click", "touchstart", "touchmove"],
         // ===============================
         // 🎬 ANIMAÇÃO DE ENTRADA
         // ===============================
         animation: {
           duration: 1000,
           easing: "easeOutQuart",
-          delay: (ctx) => ctx.dataIndex * 60
+          delay: (ctx) => ctx.dataIndex * 60,
         },
 
         onClick: (event, elements) => {
@@ -932,9 +968,14 @@ function renderizar(d) {
           if (!nomeEvento) return;
 
           // 🔥 TOGGLE GLOBAL ÚNICO
-          eventoSelecionado =
-            eventoSelecionado === nomeEvento ? null : nomeEvento;
+          const novo = eventoSelecionado === nomeEvento ? null : nomeEvento;
 
+          // 🚨 evita reprocessamento desnecessário
+          if (novo === eventoSelecionado) return;
+
+          eventoSelecionado = novo;
+
+          if (aplicandoFiltro) return;
           aplicarFiltrosFrontend();
         },
 
@@ -944,42 +985,42 @@ function renderizar(d) {
               callback: function (value) {
                 const label = this.getLabelForValue(value);
 
-                return Array.isArray(label) ? label : label.split(' ');
+                return Array.isArray(label) ? label : label.split(" ");
               },
               color: "#aaa",
               maxRotation: 0,
               minRotation: 0,
               // maxRotation: 45,
               // minRotation: 30
-              align: 'center',
+              align: "center",
               autoSkip: false, // 🔥 MOSTRA TODOS
               maxTicksLimit: 12,
               // autoSkip: true,          // 🔥 deixa o Chart respirar
               // maxTicksLimit: 10,        // 🔥 reduz densidade
               padding: 10, // 🔥 dá respiro
               font: {
-                size: 10 // 🔥 diminui um pouco
-              }
+                size: 10, // 🔥 diminui um pouco
+              },
             },
-            grid: { display: false }
+            grid: { display: false },
           },
           y: {
             beginAtZero: true,
-            grace: '10%', // 🔥 cria espaço acima das barras
+            grace: "10%", // 🔥 cria espaço acima das barras
             ticks: {
               color: "#aaa",
               padding: 8,
               callback: (value) => {
                 return value.toLocaleString("pt-BR");
-              }
+              },
             },
-            grid: { color: "rgba(255,255,255,0.05)" }
-          }
+            grid: { color: "rgba(255,255,255,0.05)" },
+          },
         },
 
         interaction: {
-          mode: 'nearest',
-          intersect: false
+          mode: "nearest",
+          intersect: false,
         },
 
         plugins: {
@@ -987,25 +1028,24 @@ function renderizar(d) {
 
           title: {
             display: true,
-            text:
-              eventoSelecionado || "Top 12 Eventos",
+            text: eventoSelecionado || "Top 12 Eventos",
             color: "#00e5ff",
-            font: { size: 14 }
+            font: { size: 14 },
           },
           // 🔥 AQUI ESTÁ O SEGREDO
           datalabels: {
-            anchor: 'end',      // posiciona no topo
-            align: 'top',       // acima da barra
-            color: '#00e5ff',
+            anchor: "end", // posiciona no topo
+            align: "top", // acima da barra
+            color: "#00e5ff",
             textShadowBlur: 6,
-            textShadowColor: '#00e5ff',
+            textShadowColor: "#00e5ff",
             font: {
-              weight: 'bold',
-              size: 12
+              weight: "bold",
+              size: 12,
             },
             formatter: (value) => {
               return value.toLocaleString("pt-BR");
-            }
+            },
           },
 
           tooltip: {
@@ -1013,10 +1053,10 @@ function renderizar(d) {
             borderColor: "#7c3aed", // 🔥 leve ajuste para combinar com gradient
             borderWidth: 1,
             titleColor: "#7c3aed",
-            bodyColor: "#fff"
+            bodyColor: "#fff",
           },
-        }
-      }
+        },
+      },
     });
   }
 
@@ -1032,7 +1072,7 @@ function renderizar(d) {
 
       return [
         palavras.slice(0, meio).join(" "),
-        palavras.slice(meio).join(" ")
+        palavras.slice(meio).join(" "),
       ];
     }
 
@@ -1042,7 +1082,7 @@ function renderizar(d) {
     return [
       palavras.slice(0, parte).join(" "),
       palavras.slice(parte, parte * 2).join(" "),
-      palavras.slice(parte * 2).join(" ")
+      palavras.slice(parte * 2).join(" "),
     ];
   }
 
@@ -1076,41 +1116,37 @@ function renderizar(d) {
   // 🔁 MORPH PIZZA
   // ===============================
   if (chartPizza) {
-
-    chartPizza.data.labels = eventosPizza.map(e => e.nome);
-    chartPizza.data.datasets[0].data = eventosPizza.map(e => e.qtd);
+    chartPizza.data.labels = eventosPizza.map((e) => e.nome);
+    chartPizza.data.datasets[0].data = eventosPizza.map((e) => e.qtd);
 
     // 🎨 aplica gradiente no update
     const cores = gerarGradienteArray(eventosPizza.length);
 
-    chartPizza.data.datasets[0].backgroundColor =
-      eventosPizza.map((e, i) =>
-        e.nome === eventoSelecionado
-          ? "#00e5ff"
-          : cores[i]
-      );
+    chartPizza.data.datasets[0].backgroundColor = eventosPizza.map((e, i) =>
+      e.nome === eventoSelecionado ? "#00e5ff" : cores[i],
+    );
 
     chartPizza.update();
-
   } else {
-
     // 🎨 aplica gradiente no update
     const cores = gerarGradienteArray(eventosPizza.length);
     chartPizza = new Chart(ctxPizza, {
       type: "doughnut",
       data: {
-        labels: eventosPizza.map(e => e.nome),
-        datasets: [{
-          data: eventosPizza.map(e => e.qtd),
+        labels: eventosPizza.map((e) => e.nome),
+        datasets: [
+          {
+            data: eventosPizza.map((e) => e.qtd),
 
-          backgroundColor: eventosPizza.map((e, i) =>
-            e.nome === eventoSelecionado ? "#00e5ff" : cores[i]
-          ),
+            backgroundColor: eventosPizza.map((e, i) =>
+              e.nome === eventoSelecionado ? "#00e5ff" : cores[i],
+            ),
 
-          borderColor: "#0a0a0a",
-          borderWidth: 1,
-          hoverOffset: 12
-        }]
+            borderColor: "#0a0a0a",
+            borderWidth: 1,
+            hoverOffset: 12,
+          },
+        ],
       },
       options: {
         responsive: true,
@@ -1121,7 +1157,7 @@ function renderizar(d) {
           animateRotate: true,
           animateScale: true,
           duration: 1200,
-          easing: "easeOutExpo"
+          easing: "easeOutExpo",
         },
 
         onClick: (event, elements) => {
@@ -1132,9 +1168,14 @@ function renderizar(d) {
 
           if (!nomeEvento) return;
 
-          eventoSelecionado =
-            eventoSelecionado === nomeEvento ? null : nomeEvento;
+          const novo = eventoSelecionado === nomeEvento ? null : nomeEvento;
 
+          // 🚨 evita reprocessamento desnecessário
+          if (novo === eventoSelecionado) return;
+
+          eventoSelecionado = novo;
+
+          if (aplicandoFiltro) return;
           aplicarFiltrosFrontend();
         },
 
@@ -1144,29 +1185,28 @@ function renderizar(d) {
             labels: {
               color: "#aaa",
               font: { size: 10 },
-              padding: 10
-            }
+              padding: 10,
+            },
           },
 
           title: {
             display: true,
             text: "Distribuição (%)",
             color: "#00e5ff",
-            font: { size: 13 }
+            font: { size: 13 },
           },
-
 
           // 🔥 AQUI ESTÁ O AJUSTE
           datalabels: {
-            color: '#fff',
-            textStrokeColor: '#000',
+            color: "#fff",
+            textStrokeColor: "#000",
             textStrokeWidth: 3, // 🔥 contorno preto
             textShadowBlur: 6,
-            textShadowColor: '#000',
+            textShadowColor: "#000",
 
             font: {
-              weight: 'bold',
-              size: 11
+              weight: "bold",
+              size: 11,
             },
 
             formatter: (value, context) => {
@@ -1174,10 +1214,10 @@ function renderizar(d) {
               const porcentagem = (value / total) * 100;
 
               // 🔥 esconde valores muito pequenos
-              if (porcentagem < 2) return '';
+              if (porcentagem < 2) return "";
 
               return `${porcentagem.toFixed(1)}%`;
-            }
+            },
           },
 
           tooltip: {
@@ -1185,17 +1225,15 @@ function renderizar(d) {
             borderColor: "#7c3aed", // 🔥 leve ajuste para combinar com gradient
             borderWidth: 1,
             titleColor: "#7c3aed",
-            bodyColor: "#fff"
-          }
-        }
-      }
+            bodyColor: "#fff",
+          },
+        },
+      },
     });
   }
   console.log("Eventos para linha:", d.eventos.slice(0, 5));
 
-  console.log(
-    Object.keys(Chart.registry.plugins.items)
-  );
+  console.log(Object.keys(Chart.registry.plugins.items));
   // ===============================
   // 📈 GRÁFICO LINHA (INTEGRADO)
   // ===============================
@@ -1211,13 +1249,10 @@ function renderizar(d) {
   }
 
   if (ctxLinha) {
-
-    const timeline = Array.isArray(d.eventosTimeline)
-      ? d.eventosTimeline
-      : [];
+    const timeline = Array.isArray(d.eventosTimeline) ? d.eventosTimeline : [];
 
     const timelineFiltrada = eventoSelecionado
-      ? timeline.filter(e => e.nome === eventoSelecionado)
+      ? timeline.filter((e) => e.nome === eventoSelecionado)
       : timeline;
 
     // 🔥 se não tiver evento selecionado → mostra só TOP eventos
@@ -1231,24 +1266,19 @@ function renderizar(d) {
     }
 
     const mudouEstrutura =
-      !chartLinha ||
-      chartLinha.data.labels.length !== multi.labels.length;
+      !chartLinha || chartLinha.data.labels.length !== multi.labels.length;
 
     if (chartLinha && !mudouEstrutura) {
-
       // ✅ UPDATE COM ANIMAÇÃO (SUAVE)
       chartLinha.data.labels = multi.labels;
       chartLinha.data.datasets = multi.datasets;
 
-      chartLinha.update('active');
-
+      chartLinha.update("active");
     } else {
-
       // 🔥 RECRIA (quando necessário)
       if (chartLinha) {
         chartLinha.destroy();
       }
-
 
       // 🔥 recria SEMPRE
       chartLinha = new Chart(ctxLinha, {
@@ -1256,16 +1286,15 @@ function renderizar(d) {
         data: {
           display: false,
           labels: multi.labels,
-          datasets: multi.datasets // 🔥 CORRETO
+          datasets: multi.datasets, // 🔥 CORRETO
         },
         options: {
-
           onClick: (evt, elements, chart) => {
             const points = chart.getElementsAtEventForMode(
               evt,
-              'nearest',
+              "nearest",
               { intersect: false },
-              true
+              true,
             );
 
             if (points.length) {
@@ -1284,15 +1313,15 @@ function renderizar(d) {
           // 🔥 FORÇA ANIMAÇÃO AO CRIAR
           animation: {
             duration: 800,
-            easing: 'easeInOutQuart'
+            easing: "easeInOutQuart",
           },
 
           transitions: {
             active: {
               animation: {
-                duration: 500
-              }
-            }
+                duration: 500,
+              },
+            },
           },
           plugins: {
             legend: {
@@ -1303,11 +1332,10 @@ function renderizar(d) {
                 boxWidth: 12,
                 padding: 15,
                 font: {
-                  size: 10
-                }
-              }
+                  size: 10,
+                },
+              },
             }, // 🔥 importante pra múltiplas linhas
-
 
             // 💣 DESATIVA OS NÚMEROS
             datalabels: {
@@ -1316,44 +1344,42 @@ function renderizar(d) {
                 return context.datasetIndex === datasetSelecionado;
               },
 
-              color: '#fff',
+              color: "#fff",
               font: {
-                weight: 'bold',
-                size: 10
+                weight: "bold",
+                size: 10,
               },
 
-              align: 'top',
-              offset: 6
+              align: "top",
+              offset: 6,
             },
 
             title: {
               display: true,
               text: "Eventos ao longo do tempo",
-              color: "#00e5ff"
+              color: "#00e5ff",
             },
 
             tooltip: {
               callbacks: {
                 title: (items) => {
                   const raw = items[0].label;
-
                 },
-                label: (context) =>
-                  `${context.dataset.label}: ${context.raw}`
-              }
+                label: (context) => `${context.dataset.label}: ${context.raw}`,
+              },
             },
 
             zoom: {
               pan: {
                 enabled: true,
-                mode: 'x'
+                mode: "x",
               },
               zoom: {
                 wheel: { enabled: true },
                 pinch: { enabled: true },
-                mode: 'x'
-              }
-            }
+                mode: "x",
+              },
+            },
           },
           scales: {
             x: {
@@ -1361,35 +1387,37 @@ function renderizar(d) {
                 color: "#aaa",
                 maxRotation: 0,
                 autoSkip: true, // 🔥 ESSENCIAL
-                maxTicksLimit: 10 // 🔥 controla densidade
+                maxTicksLimit: 10, // 🔥 controla densidade
               },
               grid: {
-                display: false
-              }
+                display: false,
+              },
             },
             y: {
               ticks: {
-                color: "#aaa"
+                color: "#aaa",
               },
               grid: {
-                color: "rgba(255,255,255,0.05)"
-              }
-            }
-          }
-        }
+                color: "rgba(255,255,255,0.05)",
+              },
+            },
+          },
+        },
       });
     }
   }
 }
 
 function filtrarEventoGraf(nomeEvento) {
+  const novo = eventoSelecionado === nomeEvento ? null : nomeEvento;
 
-  eventoSelecionado =
-    eventoSelecionado === nomeEvento ? null : nomeEvento;
+  if (novo === eventoSelecionado) return;
 
+  eventoSelecionado = novo;
+
+  if (aplicandoFiltro) return;
   aplicarFiltrosFrontend();
 }
-
 
 function agruparPorData(eventos) {
   if (!eventos || !eventos.length) {
@@ -1399,8 +1427,7 @@ function agruparPorData(eventos) {
 
   const mapa = {};
 
-  eventos.forEach(e => {
-
+  eventos.forEach((e) => {
     if (!e || !e.data) return;
 
     const partes = e.data.split(" ");
@@ -1417,7 +1444,7 @@ function agruparPorData(eventos) {
 
   const resultado = Object.entries(mapa).map(([data, qtd]) => ({
     data,
-    qtd
+    qtd,
   }));
 
   console.log("dadosTempo:", resultado);
@@ -1425,12 +1452,10 @@ function agruparPorData(eventos) {
   return resultado.sort((a, b) => new Date(a.data) - new Date(b.data));
 }
 
-
-
 function agruparMultiplasLinhas(eventos) {
   const mapa = {};
 
-  eventos.forEach(e => {
+  eventos.forEach((e) => {
     if (!e?.data || !e?.nome) return;
 
     const hora = e.data.substring(0, 13) + ":00:00"; // ✅ ISO válido
@@ -1449,20 +1474,23 @@ function agruparMultiplasLinhas(eventos) {
   });
 
   const eventosUnicos = new Set();
-  Object.values(mapa).forEach(obj => {
-    Object.keys(obj).forEach(nome => eventosUnicos.add(nome));
+  Object.values(mapa).forEach((obj) => {
+    Object.keys(obj).forEach((nome) => eventosUnicos.add(nome));
   });
 
   const TOP = 8; // 🔥 ajuste aqui (3, 5 ou 7)
 
   const eventosOrdenados = Array.from(eventosUnicos)
-    .map(nome => {
-      const total = labels.reduce((acc, hora) => acc + (mapa[hora][nome] || 0), 0);
+    .map((nome) => {
+      const total = labels.reduce(
+        (acc, hora) => acc + (mapa[hora][nome] || 0),
+        0,
+      );
       return { nome, total };
     })
     .sort((a, b) => b.total - a.total)
     .slice(0, TOP)
-    .map(e => e.nome);
+    .map((e) => e.nome);
 
   const cores = [
     "#00e5ff",
@@ -1470,12 +1498,12 @@ function agruparMultiplasLinhas(eventos) {
     "#22c55e",
     "#f59e0b",
     "#ef4444",
-    "#3b82f6"
+    "#3b82f6",
   ];
 
   const datasets = eventosOrdenados.map((nome, i) => ({
     label: nome,
-    data: labels.map(hora => mapa[hora][nome] ?? null),
+    data: labels.map((hora) => mapa[hora][nome] ?? null),
     borderColor: cores[i % cores.length],
     backgroundColor: cores[i % cores.length] + "33",
     borderWidth: 2,
@@ -1484,25 +1512,16 @@ function agruparMultiplasLinhas(eventos) {
     pointRadius: 0,
     pointHoverRadius: 5,
     pointHitRadius: 10,
-    spanGaps: true // 🔥 evita linhas quebradas estranhas
+    spanGaps: true, // 🔥 evita linhas quebradas estranhas
   }));
 
   return { labels, datasets };
 }
 
-
-
-
-
-
-
-
-
 // =================================
 // CONTADOR ANIMADO (KPIs)
 // =================================
 function animarNumero(elemento, valorFinal, duracao = 800) {
-
   let inicio = 0;
   const incremento = valorFinal / (duracao / 16);
 
@@ -1521,82 +1540,137 @@ function animarNumero(elemento, valorFinal, duracao = 800) {
   atualizar();
 }
 
-
-
 // ==========================================
-// 🔄 REFRESH TOKEN (PADRÃO HEADER)
+// 🔄 RENOVAÇÃO DA SESSÃO (REFRESH TOKEN)
+// ==========================================
+// Esta função solicita ao backend a renovação da sessão.
+//
+// Fluxo:
+//
+// Access Token expirou
+//          ↓
+// POST /auth/refresh
+//          ↓
+// Backend valida Refresh Token (cookie HttpOnly)
+//          ↓
+// Backend gera novos cookies
+//          ↓
+// Requisições futuras voltam a funcionar
+//
+// Nenhum token é manipulado pelo JavaScript.
+// Toda a autenticação ocorre através de cookies HttpOnly.
 // ==========================================
 async function refreshToken() {
-
-  const refresh = localStorage.getItem("refreshToken");
-
-  if (!refresh) throw new Error("SEM_REFRESH");
-
+  // Não é mais necessário ler o refresh token do localStorage.
+  // O navegador enviará o HttpOnly cookie automaticamente.
   const response = await fetch(API_BASE + "/auth/refresh", {
     method: "POST",
-    headers: {
-      "Authorization": "Bearer " + refresh
-    }
+    // Headers de autorização manual foram removidos; cookies serão enviados automaticamente.
+    credentials: "include", // Importante para enviar cookies cross-origin
   });
 
+  // Se o refresh falhar, considera a sessão inválida.
   if (!response.ok) {
     throw new Error("REFRESH_INVALIDO");
   }
 
-  const data = await response.json();
+  // Nesta implementação, o backend renova os cookies HttpOnly.
+  // Portanto, o frontend não precisa receber ou armazenar tokens no corpo da resposta.
+  // Assume-se que novos cookies foram definidos. Apenas retorna um indicador de sucesso ou dados não sensíveis, se houver.
 
-  // 🔥 ATUALIZA AMBOS OS TOKENS
-  localStorage.setItem("token", data.token);
-  localStorage.setItem("refreshToken", data.refreshToken);
-
-  return data.token;
+  return true;
 }
 
 // ==========================================
-// 🔁 FETCH COM RETRY + REFRESH AUTOMÁTICO
+// 🔁 FETCH COM RETRY AUTOMÁTICO
+// ==========================================
+//
+// Responsabilidades:
+//
+// 1. Executar a requisição original
+// 2. Enviar cookies automaticamente
+// 3. Detectar sessão expirada
+// 4. Solicitar refresh da sessão
+// 5. Reexecutar a requisição original
+//
+// Parâmetro isRetry:
+//
+// false → primeira tentativa
+// true  → requisição já refeita após refresh
+//
+// Isso evita loops infinitos caso o refresh falhe
+// ou a sessão realmente tenha expirado.
 // ==========================================
 async function fetchWithAuthRetry(url, options = {}, isRetry = false) {
-
-  const token = localStorage.getItem("token");
-
+  //console.log("🔥 URL CHAMADA:", url);
+  // Realiza a requisição normalmente. Não é mais necessário ler o token do localStorage.
+  // O navegador enviará o HttpOnly cookie automaticamente. Porém, há um detalhes: O navegador só envairá os cookies associados ao domínio quando:
+  // (-- credentials: "include" --) estiver presente em chamadas cross-origin.
+  // 🔁 refaz a requisição já com novos cookies (enviados automaticamente).
 
   const response = await fetch(url, {
     ...options,
+    credentials: "include", // Essencial para envio de cookies em chamadas cross-origin.
     headers: {
       ...(options.headers || {}),
-      "Authorization": "Bearer " + token
-    }
+      // O Authorization header não é mais necessário, pois o token está em HttpOnly Cookie.
+      // "Authorization": "Bearer " + token // REMOVIDO
+    },
   });
+  //console.log("🔥 STATUS:", response.status);
+  // ==========================================
+  // 🔐 SESSÃO EXPIRADA
+  // ==========================================
+  //
+  // Caso o backend informe que a autenticação
+  // não é mais válida (401 ou 403),
+  // tenta renovar a sessão apenas uma vez.
+  //
+  // O !isRetry impede loops infinitos.
+  // ==========================================
 
-  // ==========================================
-  // 🔐 TOKEN EXPIRADO → TENTA REFRESH
-  // ==========================================
+  //Uma observação final: eu verificaria no backend se o 403 realmente significa token expirado. Em APIs REST, normalmente:
+  //401 Unauthorized  → token ausente, inválido ou expirado
+  //403 Forbidden     → usuário autenticado, mas sem permissão
+  //Se o seu backend segue esse padrão, o trecho ideal seria:
+  //if (response.status === 401 && !isRetry)
+  //Isso evita tentar refresh quando o problema é apenas falta de permissão para acessar determinado recurso.
+
   if ((response.status === 401 || response.status === 403) && !isRetry) {
-
     try {
+      console.warn("🔄 Sessão expirada, tentando renovar...");
 
-      console.warn("🔄 Token expirado, tentando refresh...");
-
+      // Solicita novos cookies ao backend.
       await refreshToken();
 
-      // 🔁 refaz a requisição já com token novo
+      // Refaz a mesma requisição original.
+      //
+      // O parâmetro true indica que já estamos
+      // em uma segunda tentativa.
+      //
+      // Se ela falhar novamente, não será feito
+      // novo refresh.
       return fetchWithAuthRetry(url, options, true);
-
     } catch (err) {
+      console.error("❌ Falha na renovação da sessão", err);
 
-      console.error("❌ Falha no refresh");
+      // Não limpa localStorage, pois tokens não estão lá. Apenas redireciona.
+      // Refresh falhou.
+      //
+      // Considera que a sessão expirou
+      // definitivamente e redireciona
+      // o usuário para login.
 
-      localStorage.clear();
       window.location.href = "login.html";
 
+      // Retorna a resposta original caso esteja OK
+      // ou caso não seja um erro de autenticação.
       throw err;
     }
   }
 
   return response;
 }
-
-
 
 // =====================================================
 // 🎨 CONFIGURAÇÃO GLOBAL DE ESTILO (TEMA DARK POWER BI)
@@ -1605,28 +1679,26 @@ const ESTILO = {
   header: {
     font: { bold: true, color: { rgb: "FFFFFF" } },
     fill: { fgColor: { rgb: "2D2D44" } },
-    alignment: { horizontal: "center", vertical: "center" }
+    alignment: { horizontal: "center", vertical: "center" },
   },
   texto: {
-    font: { color: { rgb: "FFFFFF" } }
+    font: { color: { rgb: "FFFFFF" } },
   },
   fundo: {
-    fill: { fgColor: { rgb: "1E1E2F" } }
-  }
+    fill: { fgColor: { rgb: "1E1E2F" } },
+  },
 };
 
 // =====================================================
 // 🎨 APLICA TEMA DARK EM TODA A ABA (SEM QUEBRAR ESTILOS)
 // =====================================================
 function aplicarTemaDark(ws) {
-
   if (!ws["!ref"]) return;
 
   const range = XLSX.utils.decode_range(ws["!ref"]);
 
   for (let R = range.s.r; R <= range.e.r; ++R) {
     for (let C = range.s.c; C <= range.e.c; ++C) {
-
       const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
 
       if (!ws[cellRef]) continue;
@@ -1635,7 +1707,7 @@ function aplicarTemaDark(ws) {
       ws[cellRef].s = {
         ...ws[cellRef].s,
         ...ESTILO.texto,
-        ...ESTILO.fundo
+        ...ESTILO.fundo,
       };
     }
   }
@@ -1645,23 +1717,20 @@ function aplicarTemaDark(ws) {
 // 🦓 ZEBRA STRIPING (MELHORA LEITURA)
 // =====================================================
 function aplicarZebra(ws) {
-
   if (!ws["!ref"]) return;
 
   const range = XLSX.utils.decode_range(ws["!ref"]);
 
   for (let R = range.s.r + 1; R <= range.e.r; R++) {
-
     if (R % 2 === 0) {
       for (let C = range.s.c; C <= range.e.c; C++) {
-
         const ref = XLSX.utils.encode_cell({ r: R, c: C });
 
         if (!ws[ref]) continue;
 
         ws[ref].s = {
           ...ws[ref].s,
-          fill: { fgColor: { rgb: "26263A" } }
+          fill: { fgColor: { rgb: "26263A" } },
         };
       }
     }
@@ -1669,7 +1738,6 @@ function aplicarZebra(ws) {
 }
 
 function destacarTop3(ws, colIndex, startRow) {
-
   const cores = ["FFD700", "C0C0C0", "CD7F32"]; // ouro, prata, bronze
 
   for (let i = 0; i < 3; i++) {
@@ -1679,7 +1747,7 @@ function destacarTop3(ws, colIndex, startRow) {
 
     ws[ref].s = {
       ...ws[ref].s,
-      font: { bold: true, color: { rgb: cores[i] } }
+      font: { bold: true, color: { rgb: cores[i] } },
     };
   }
 }
@@ -1688,21 +1756,19 @@ function destacarTop3(ws, colIndex, startRow) {
 // 📌 GRID PADRÃO (ALINHAMENTO PERFEITO)
 // =====================================================
 function aplicarGrid(ws) {
-
   if (!ws["!ref"]) return;
 
   const range = XLSX.utils.decode_range(ws["!ref"]);
 
   for (let R = range.s.r; R <= range.e.r; ++R) {
     for (let C = range.s.c; C <= range.e.c; ++C) {
-
       const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
 
       if (!ws[cellRef]) continue;
 
       ws[cellRef].s = {
         ...ws[cellRef].s,
-        alignment: { horizontal: "center", vertical: "center" }
+        alignment: { horizontal: "center", vertical: "center" },
       };
     }
   }
@@ -1712,7 +1778,6 @@ function aplicarGrid(ws) {
 // 📈 RANKING COM CORES DINÂMICAS (HEATMAP)
 // =====================================================
 function aplicarRankingCores(ws, colIndex, startRow, endRow) {
-
   const valores = [];
 
   for (let R = startRow; R <= endRow; R++) {
@@ -1724,7 +1789,6 @@ function aplicarRankingCores(ws, colIndex, startRow, endRow) {
   const min = Math.min(...valores);
 
   for (let R = startRow; R <= endRow; R++) {
-
     const cellRef = XLSX.utils.encode_cell({ r: R, c: colIndex });
     const cell = ws[cellRef];
 
@@ -1733,14 +1797,16 @@ function aplicarRankingCores(ws, colIndex, startRow, endRow) {
     const ratio = (cell.v - min) / (max - min || 1);
 
     let color;
-    if (ratio > 0.7) color = "00C853";      // verde
-    else if (ratio > 0.4) color = "FFAB00"; // amarelo
-    else color = "FF5252";                  // vermelho
+    if (ratio > 0.7)
+      color = "00C853"; // verde
+    else if (ratio > 0.4)
+      color = "FFAB00"; // amarelo
+    else color = "FF5252"; // vermelho
 
     cell.s = {
       ...cell.s,
       fill: { fgColor: { rgb: color } },
-      font: { bold: true, color: { rgb: "FFFFFF" } }
+      font: { bold: true, color: { rgb: "FFFFFF" } },
     };
   }
 }
@@ -1749,9 +1815,7 @@ function aplicarRankingCores(ws, colIndex, startRow, endRow) {
 // 📊 BARRA DE PROGRESSO VISUAL (SEM QUEBRAR DADOS)
 // =====================================================
 function aplicarBarraProgresso(ws, colIndex, startRow, endRow) {
-
   for (let R = startRow; R <= endRow; R++) {
-
     const cellRef = XLSX.utils.encode_cell({ r: R, c: colIndex });
     const cell = ws[cellRef];
 
@@ -1762,9 +1826,7 @@ function aplicarBarraProgresso(ws, colIndex, startRow, endRow) {
     const totalBlocos = 8;
     const preenchido = Math.round(valor * totalBlocos);
 
-    const barra =
-      "█".repeat(preenchido) +
-      "░".repeat(totalBlocos - preenchido);
+    const barra = "█".repeat(preenchido) + "░".repeat(totalBlocos - preenchido);
 
     let color;
     if (valor > 0.7) color = "00C853";
@@ -1777,7 +1839,7 @@ function aplicarBarraProgresso(ws, colIndex, startRow, endRow) {
     cell.s = {
       ...cell.s,
       font: { color: { rgb: color }, bold: true },
-      alignment: { horizontal: "left" }
+      alignment: { horizontal: "left" },
     };
   }
 }
@@ -1786,7 +1848,6 @@ function aplicarBarraProgresso(ws, colIndex, startRow, endRow) {
 // 📤 EXPORTAÇÃO EXCEL
 // =====================================================
 function exportarExcel() {
-
   if (!Object.keys(resultadosPorPlaca).length) {
     alert("Nenhum dado para exportar");
     return;
@@ -1805,30 +1866,33 @@ function exportarExcel() {
 // 📊 ABA DASHBOARD (PRINCIPAL)
 // =====================================================
 function gerarAbaResumo(wb) {
-
   const ws = XLSX.utils.aoa_to_sheet([]);
 
   // =========================
   // 🎯 TÍTULO
   // =========================
-  XLSX.utils.sheet_add_aoa(ws, [
-    ["🚀 GERADOR DE EXCEDENTE"],
-    ["Relatório Inteligente • Sistema Analítico"]
-  ], { origin: "A1" });
+  XLSX.utils.sheet_add_aoa(
+    ws,
+    [
+      ["🚀 GERADOR DE EXCEDENTE"],
+      ["Relatório Inteligente • Sistema Analítico"],
+    ],
+    { origin: "A1" },
+  );
 
   ws["A1"].s = {
     font: { sz: 20, bold: true, color: { rgb: "00E5FF" } },
-    alignment: { horizontal: "center" }
+    alignment: { horizontal: "center" },
   };
 
   ws["A2"].s = {
     font: { sz: 12, color: { rgb: "9AA0A6" } },
-    alignment: { horizontal: "center" }
+    alignment: { horizontal: "center" },
   };
 
   ws["!merges"] = [
     { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } },
-    { s: { r: 1, c: 0 }, e: { r: 1, c: 5 } }
+    { s: { r: 1, c: 0 }, e: { r: 1, c: 5 } },
   ];
 
   // =========================
@@ -1838,9 +1902,9 @@ function gerarAbaResumo(wb) {
     ? "NAO APTO"
     : "APTO";
 
-  XLSX.utils.sheet_add_aoa(ws, [
-    ["STATUS GERAL", statusGeral]
-  ], { origin: "A4" });
+  XLSX.utils.sheet_add_aoa(ws, [["STATUS GERAL", statusGeral]], {
+    origin: "A4",
+  });
 
   const statusCell = ws["B4"];
 
@@ -1848,43 +1912,41 @@ function gerarAbaResumo(wb) {
     font: {
       bold: true,
       color: {
-        rgb: statusGeral === "APTO" ? "00FF88" : "FF3B3B"
-      }
+        rgb: statusGeral === "APTO" ? "00FF88" : "FF3B3B",
+      },
     },
     fill: {
       fgColor: {
-        rgb: statusGeral === "APTO" ? "002B1F" : "2B0000"
-      }
+        rgb: statusGeral === "APTO" ? "002B1F" : "2B0000",
+      },
     },
-    alignment: { horizontal: "center" }
+    alignment: { horizontal: "center" },
   };
-
-
 
   const totalPlacas = Object.keys(resultadosPorPlaca).length;
 
   let totalEventos = 0;
-  Object.values(resultadosPorPlaca).forEach(arr => {
-    arr.forEach(d => totalEventos += d.total);
+  Object.values(resultadosPorPlaca).forEach((arr) => {
+    arr.forEach((d) => (totalEventos += d.total));
   });
 
-  XLSX.utils.sheet_add_aoa(ws, [
-    ["TOTAL PLACAS", totalPlacas, "", "TOTAL EVENTOS", totalEventos]
-  ], { origin: "A3" });
+  XLSX.utils.sheet_add_aoa(
+    ws,
+    [["TOTAL PLACAS", totalPlacas, "", "TOTAL EVENTOS", totalEventos]],
+    { origin: "A3" },
+  );
 
   // =========================
   // 📦 TABELA
   // =========================
   const dadosResumo = [
-    ["PLACA", "TOTAL", "INTERVALO", "STATUS", "EVENTO PRINCIPAL", "%"]
+    ["PLACA", "TOTAL", "INTERVALO", "STATUS", "EVENTO PRINCIPAL", "%"],
   ];
 
-  Object.keys(resultadosPorPlaca).forEach(placa => {
-
+  Object.keys(resultadosPorPlaca).forEach((placa) => {
     const d = resultadosPorPlaca[placa][0];
 
-    const eventosOrdenados = [...d.eventos]
-      .sort((a, b) => b.qtd - a.qtd);
+    const eventosOrdenados = [...d.eventos].sort((a, b) => b.qtd - a.qtd);
 
     const principal = eventosOrdenados[0]?.nome || "-";
     const percentual = eventosOrdenados[0]?.percentual || 0;
@@ -1897,7 +1959,7 @@ function gerarAbaResumo(wb) {
       d.intervaloTransmissao,
       status,
       principal,
-      percentual / 100
+      percentual / 100,
     ]);
   });
 
@@ -1915,8 +1977,12 @@ function gerarAbaResumo(wb) {
   // 📏 COLUNAS
   // =========================
   ws["!cols"] = [
-    { wch: 15 }, { wch: 12 }, { wch: 18 },
-    { wch: 18 }, { wch: 30 }, { wch: 28 }
+    { wch: 15 },
+    { wch: 12 },
+    { wch: 18 },
+    { wch: 18 },
+    { wch: 30 },
+    { wch: 28 },
   ];
 
   // =========================
@@ -1928,9 +1994,9 @@ function gerarAbaResumo(wb) {
   // 🎨 APLICAÇÕES VISUAIS
   // =========================
   // 🎨 ORDEM PROFISSIONAL DE ESTILIZAÇÃO
-  aplicarTemaDark(ws);     // base
-  aplicarZebra(ws);        // leitura
-  aplicarGrid(ws);         // alinhamento
+  aplicarTemaDark(ws); // base
+  aplicarZebra(ws); // leitura
+  aplicarGrid(ws); // alinhamento
   aplicarRankingCores(ws, 1, 6, dadosResumo.length + 5);
   aplicarBarraProgresso(ws, 5, 6, dadosResumo.length + 5);
 
@@ -1941,33 +2007,26 @@ function gerarAbaResumo(wb) {
 // 📦 ABA BASE DE DADOS
 // =====================================================
 function gerarAbaDados(wb) {
-
   const ws = XLSX.utils.aoa_to_sheet([]);
 
-  const dados = [
-    ["PLACA", "EVENTO", "QTD", "%", "DATA INICIO", "DATA FIM"]
-  ];
+  const dados = [["PLACA", "EVENTO", "QTD", "%", "DATA INICIO", "DATA FIM"]];
 
   // =========================
   // 📥 MONTA DADOS
   // =========================
-  Object.keys(resultadosPorPlaca).forEach(placa => {
-
-    resultadosPorPlaca[placa].forEach(d => {
-
-      d.eventos.forEach(e => {
+  Object.keys(resultadosPorPlaca).forEach((placa) => {
+    resultadosPorPlaca[placa].forEach((d) => {
+      d.eventos.forEach((e) => {
         dados.push([
           placa,
           e.nome,
           e.qtd,
           e.percentual / 100, // ✔ mantém número (não texto)
           d.dataInicio,
-          d.dataFim
+          d.dataFim,
         ]);
       });
-
     });
-
   });
 
   XLSX.utils.sheet_add_aoa(ws, dados, { origin: "A1" });
@@ -1984,13 +2043,12 @@ function gerarAbaDados(wb) {
   // 🎯 FORMATA % CORRETAMENTE
   // =========================
   for (let R = 1; R < dados.length; R++) {
-
     const cellRef = XLSX.utils.encode_cell({ r: R, c: 3 }); // coluna %
 
     if (ws[cellRef]) {
       ws[cellRef].s = {
         ...ws[cellRef].s,
-        numFmt: "0.0%" // 🔥 transforma 0.49 em 49.0%
+        numFmt: "0.0%", // 🔥 transforma 0.49 em 49.0%
       };
     }
   }
@@ -2004,7 +2062,7 @@ function gerarAbaDados(wb) {
     { wch: 10 }, // QTD
     { wch: 12 }, // % (ajustado - sem barra aqui)
     { wch: 20 }, // DATA INICIO
-    { wch: 20 }  // DATA FIM
+    { wch: 20 }, // DATA FIM
   ];
 
   // =========================
@@ -2016,44 +2074,31 @@ function gerarAbaDados(wb) {
   // 🎨 APLICA TEMA (DEPOIS DO numFmt)
   // =========================
   // 🎨 ORDEM PROFISSIONAL DE ESTILIZAÇÃO
-  aplicarTemaDark(ws);     // base
-  aplicarZebra(ws);        // leitura
-  aplicarGrid(ws);         // alinhamento
+  aplicarTemaDark(ws); // base
+  aplicarZebra(ws); // leitura
+  aplicarGrid(ws); // alinhamento
   // =========================
   // 📎 ADICIONA ABA
   // =========================
   XLSX.utils.book_append_sheet(wb, ws, "Base_Dados");
 }
 
-
 // =====================================================
 // 📈 ABA TOP EVENTOS (RANKING)
 // =====================================================
 function gerarAbaTopEventos(wb) {
-
   const ws = XLSX.utils.aoa_to_sheet([]);
 
-  const dados = [
-    ["PLACA", "EVENTO", "QTD", "%"]
-  ];
+  const dados = [["PLACA", "EVENTO", "QTD", "%"]];
 
-  Object.keys(resultadosPorPlaca).forEach(placa => {
-
+  Object.keys(resultadosPorPlaca).forEach((placa) => {
     const d = resultadosPorPlaca[placa][0];
 
-    const topEventos = [...d.eventos]
-      .sort((a, b) => b.qtd - a.qtd)
-      .slice(0, 6);
+    const topEventos = [...d.eventos].sort((a, b) => b.qtd - a.qtd).slice(0, 6);
 
-    topEventos.forEach(e => {
-      dados.push([
-        placa,
-        e.nome,
-        e.qtd,
-        e.percentual / 100
-      ]);
+    topEventos.forEach((e) => {
+      dados.push([placa, e.nome, e.qtd, e.percentual / 100]);
     });
-
   });
 
   XLSX.utils.sheet_add_aoa(ws, dados, { origin: "A1" });
@@ -2064,17 +2109,14 @@ function gerarAbaTopEventos(wb) {
     if (ws[cell]) ws[cell].s = ESTILO.header;
   }
 
-  ws["!cols"] = [
-    { wch: 15 }, { wch: 35 },
-    { wch: 10 }, { wch: 28 }
-  ];
+  ws["!cols"] = [{ wch: 15 }, { wch: 35 }, { wch: 10 }, { wch: 28 }];
 
   ws["!autofilter"] = { ref: `A1:D${dados.length}` };
 
   // 🎨 ORDEM PROFISSIONAL DE ESTILIZAÇÃO
-  aplicarTemaDark(ws);     // base
-  aplicarZebra(ws);        // leitura
-  aplicarGrid(ws);         // alinhamento
+  aplicarTemaDark(ws); // base
+  aplicarZebra(ws); // leitura
+  aplicarGrid(ws); // alinhamento
 
   // 📈 ranking visual correto
   aplicarRankingCores(ws, 2, 1, dados.length - 1);
@@ -2085,8 +2127,6 @@ function gerarAbaTopEventos(wb) {
 
   XLSX.utils.book_append_sheet(wb, ws, "Top_Eventos");
 }
-
-
 
 // ========================
 // EXPORTAR PDF (CHAMADA)
@@ -2103,7 +2143,6 @@ function exportarPDF() {
 // PDF GERAL (TODAS AS PLACAS)
 // =============================
 function exportarPDFGeral() {
-
   const margem = 10;
   const pdf = new jsPDF();
 
@@ -2121,7 +2160,6 @@ function exportarPDFGeral() {
   const placas = Object.keys(resultadosPorPlaca);
 
   placas.forEach((placa, index) => {
-
     const d = resultadosPorPlaca[placa][0]; // 🔥 pega dados da placa
     const status = statusPlacas[placa];
 
@@ -2214,7 +2252,7 @@ function exportarPDFGeral() {
     // 🔥 quebra automática de texto longo
     const eventoPrincipal = pdf.splitTextToSize(
       `Evento principal: ${insights.principal}`,
-      80
+      80,
     );
 
     pdf.text(eventoPrincipal, xInfo, yInfo);
@@ -2236,13 +2274,7 @@ function exportarPDFGeral() {
   pdf.save("relatorio_geral.pdf");
 }
 
-
-
-
-
-
 function desenharRankingGlobal(pdf, resultadosPorPlaca, statusPlacas) {
-
   const margem = 10;
   let y = 30;
 
@@ -2258,12 +2290,10 @@ function desenharRankingGlobal(pdf, resultadosPorPlaca, statusPlacas) {
   // ===============================
   // 📊 MONTA DADOS
   // ===============================
-  const ranking = Object.keys(resultadosPorPlaca).map(placa => {
-
+  const ranking = Object.keys(resultadosPorPlaca).map((placa) => {
     const d = resultadosPorPlaca[placa][0];
 
-    const eventosOrdenados = [...d.eventos]
-      .sort((a, b) => b.qtd - a.qtd);
+    const eventosOrdenados = [...d.eventos].sort((a, b) => b.qtd - a.qtd);
 
     const principal = eventosOrdenados[0]?.nome || "-";
 
@@ -2271,9 +2301,8 @@ function desenharRankingGlobal(pdf, resultadosPorPlaca, statusPlacas) {
       placa,
       total: d.total,
       principal,
-      status: statusPlacas[placa]
+      status: statusPlacas[placa],
     };
-
   });
 
   // 🔥 ORDENA POR TOTAL (DESC)
@@ -2304,7 +2333,6 @@ function desenharRankingGlobal(pdf, resultadosPorPlaca, statusPlacas) {
   // 📋 LINHAS
   // ===============================
   topRanking.forEach((item, index) => {
-
     // zebra
     if (index % 2 === 0) {
       pdf.setFillColor(20, 20, 30);
@@ -2317,12 +2345,12 @@ function desenharRankingGlobal(pdf, resultadosPorPlaca, statusPlacas) {
     pdf.setFontSize(9);
 
     // 🔥 quebra nome do evento se necessário
-    const nomeEvento = item.principal.length > 22
-      ? item.principal.substring(0, 22) + "..."
-      : item.principal;
+    const nomeEvento =
+      item.principal.length > 22
+        ? item.principal.substring(0, 22) + "..."
+        : item.principal;
 
-    const statusTexto =
-      item.status === "APTO" ? "APTO" : "NAO APTO";
+    const statusTexto = item.status === "APTO" ? "APTO" : "NAO APTO";
 
     pdf.text(`${index + 1}. ${item.placa}`, margem, y);
     pdf.text(String(item.total), 70, y);
@@ -2338,22 +2366,13 @@ function desenharRankingGlobal(pdf, resultadosPorPlaca, statusPlacas) {
     pdf.text(statusTexto, 180, y);
 
     y += 6;
-
   });
-
 }
-
-
-
-
-
-
 
 // ===============================
 // 📊 GERAR GRÁFICO PARA PDF (FIXO)
 // ===============================
 function gerarGraficoPDF(eventos) {
-
   const canvas = document.createElement("canvas");
 
   // 🔥 tamanho fixo (controle total)
@@ -2365,11 +2384,13 @@ function gerarGraficoPDF(eventos) {
   const chartTemp = new Chart(ctx, {
     type: "bar",
     data: {
-      labels: eventos.map(e => formatarLabel(e.nome)),
-      datasets: [{
-        data: eventos.map(e => e.qtd),
-        backgroundColor: "rgba(0,229,255,0.7)"
-      }]
+      labels: eventos.map((e) => formatarLabel(e.nome)),
+      datasets: [
+        {
+          data: eventos.map((e) => e.qtd),
+          backgroundColor: "rgba(0,229,255,0.7)",
+        },
+      ],
     },
     options: {
       responsive: false,
@@ -2382,10 +2403,10 @@ function gerarGraficoPDF(eventos) {
             color: "#000", // 🔥 legenda escura
             font: {
               size: 11,
-              weight: "bold"
-            }
-          }
-        }
+              weight: "bold",
+            },
+          },
+        },
       },
 
       scales: {
@@ -2398,12 +2419,12 @@ function gerarGraficoPDF(eventos) {
             padding: 10, // 🔥 espaçamento entre label e eixo
             font: {
               size: 10,
-              weight: "600"
-            }
+              weight: "600",
+            },
           },
           grid: {
-            color: "rgba(0,0,0,0.1)" // leve e elegante
-          }
+            color: "rgba(0,0,0,0.1)", // leve e elegante
+          },
         },
 
         y: {
@@ -2411,15 +2432,15 @@ function gerarGraficoPDF(eventos) {
             color: "#000", // 🔥 números eixo Y escuros
             font: {
               size: 10,
-              weight: "bold"
-            }
+              weight: "bold",
+            },
           },
           grid: {
-            color: "rgba(0,0,0,0.1)"
-          }
-        }
-      }
-    }
+            color: "rgba(0,0,0,0.1)",
+          },
+        },
+      },
+    },
   });
 
   const imagem = canvas.toDataURL("image/png", 1.0);
@@ -2429,12 +2450,10 @@ function gerarGraficoPDF(eventos) {
   return imagem;
 }
 
-
 // =========================
 // PDF DETALHADO (1 PLACA)
 // =========================
 function exportarPDFDetalhado() {
-
   const margem = 10;
 
   if (!resultadoGraf) return;
@@ -2468,7 +2487,7 @@ function exportarPDFDetalhado() {
   const gapY = 6;
   const espacamentoExtra = 10;
 
-  y += (alturaCard * 2) + gapY + espacamentoExtra;
+  y += alturaCard * 2 + gapY + espacamentoExtra;
 
   // ===============================
   // 📊 GRÁFICO (PROPORÇÃO CORRETA)
@@ -2480,7 +2499,6 @@ function exportarPDFDetalhado() {
   const imgGrafico = gerarGraficoPDF(eventosOrdenadosGraf);
 
   if (imgGrafico) {
-
     const larguraGrafico = 180;
 
     // 🔥 proporção original do canvas (800x300)
@@ -2575,7 +2593,6 @@ function exportarPDFDetalhado() {
   const xInfo = 110;
   let yInfo = yTopo;
 
-
   // ===============================
   // 🍩 PIZZA (MAIOR E ALINHADA)
   // ===============================
@@ -2623,17 +2640,13 @@ function exportarPDFDetalhado() {
 
   // 🔥 LISTA ORGANIZADA
   topEventos.forEach((e, i) => {
-
-    const nome = e.nome.length > 22
-      ? e.nome.substring(0, 22) + "..."
-      : e.nome;
+    const nome = e.nome.length > 22 ? e.nome.substring(0, 22) + "..." : e.nome;
 
     const linha = `${i + 1}. ${nome} (${e.percentual.toFixed(1)}%)`;
 
     pdf.text(linha, xInfo, yInfo);
 
     yInfo += 4;
-
   });
 
   // ===============================
@@ -2668,11 +2681,11 @@ function exportarPDFDetalhado() {
   // ===============================
   // 📋 DADOS DA TABELA
   // ===============================
-  const eventosOrdenados = [...resultadoGraf.eventos]
-    .sort((a, b) => b.qtd - a.qtd);
+  const eventosOrdenados = [...resultadoGraf.eventos].sort(
+    (a, b) => b.qtd - a.qtd,
+  );
 
   eventosOrdenados.forEach((e, index) => {
-
     // 🔲 Zebra (linhas alternadas)
     if (index % 2 === 0) {
       pdf.setFillColor(20, 20, 30);
@@ -2698,7 +2711,6 @@ function exportarPDFDetalhado() {
       adicionarCabecalho(pdf, "RELATORIO DE EXCEDENTE", margem);
       y = 30;
     }
-
   });
 
   adicionarRodape(pdf, pagina);
@@ -2706,12 +2718,10 @@ function exportarPDFDetalhado() {
   pdf.save(`relatorio_${resultadoGraf.placa}.pdf`);
 }
 
-
 // ===============================
 // 🧾 CABEÇALHO PDF
 // ===============================
 function adicionarCabecalho(pdf, titulo, margem) {
-
   pdf.setFillColor(5, 1, 13);
   pdf.rect(0, 0, 210, 20, "F");
 
@@ -2724,23 +2734,19 @@ function adicionarCabecalho(pdf, titulo, margem) {
   pdf.text(`Gerado em: ${new Date().toLocaleString("pt-BR")}`, 150, 12);
 }
 
-
 // ===============================
 // 📄 RODAPÉ PDF
 // ===============================
 function adicionarRodape(pdf, pagina) {
-
   pdf.setFontSize(8);
   pdf.setTextColor(120);
   pdf.text(`Pagina ${pagina}`, 180, 290);
 }
 
-
 // ===============================
 // 📊 CAPTURAR GRÁFICO (Chart.js)
 // ===============================
 function obterImagemGrafico() {
-
   const canvas = document.getElementById("grafico");
   if (!canvas) return null;
 
@@ -2750,11 +2756,10 @@ function obterImagemGrafico() {
 // 🎨 CARDS RESUMO (LAYOUT CORRIGIDO 3 EM CIMA / 2 EMBAIXO)
 // ===============================
 function desenharCardsResumo(pdf, d, status, yInicial) {
-
   // ===============================
   // 📏 CONFIGURAÇÕES DE LAYOUT
   // ===============================
-  const larguraCard = 58;   // largura base (linha de cima)
+  const larguraCard = 58; // largura base (linha de cima)
   const alturaCard = 20;
 
   const gapX = 6;
@@ -2765,7 +2770,7 @@ function desenharCardsResumo(pdf, d, status, yInicial) {
   // ===============================
   // 📐 LARGURA TOTAL DO GRID
   // ===============================
-  const larguraTotal = (larguraCard * 3) + (gapX * 2);
+  const larguraTotal = larguraCard * 3 + gapX * 2;
 
   // 🔥 AGORA DIVIDIMOS EM 2 CARDS IGUAIS
   const larguraCardInferior = (larguraTotal - gapX) / 2;
@@ -2785,15 +2790,25 @@ function desenharCardsResumo(pdf, d, status, yInicial) {
   // ===============================
 
   // INTERVALO
-  desenharCard(pdf, col1, linha1Y, larguraCard, alturaCard,
+  desenharCard(
+    pdf,
+    col1,
+    linha1Y,
+    larguraCard,
+    alturaCard,
     "INTERVALO",
-    d.intervaloTransmissao || "-"
+    d.intervaloTransmissao || "-",
   );
 
   // TOTAL
-  desenharCard(pdf, col2, linha1Y, larguraCard, alturaCard,
+  desenharCard(
+    pdf,
+    col2,
+    linha1Y,
+    larguraCard,
+    alturaCard,
     "TOTAL",
-    String(d.total)
+    String(d.total),
   );
 
   // STATUS
@@ -2808,10 +2823,15 @@ function desenharCardsResumo(pdf, d, status, yInicial) {
     corStatus = [255, 60, 60];
   }
 
-  desenharCard(pdf, col3, linha1Y, larguraCard, alturaCard,
+  desenharCard(
+    pdf,
+    col3,
+    linha1Y,
+    larguraCard,
+    alturaCard,
     "STATUS",
     statusTexto,
-    corStatus
+    corStatus,
   );
 
   // ===============================
@@ -2819,8 +2839,7 @@ function desenharCardsResumo(pdf, d, status, yInicial) {
   // ===============================
 
   // 🔥 EVENTO PRINCIPAL
-  const eventosOrdenados = [...d.eventos]
-    .sort((a, b) => b.qtd - a.qtd);
+  const eventosOrdenados = [...d.eventos].sort((a, b) => b.qtd - a.qtd);
 
   const principal = eventosOrdenados[0]?.nome || "-";
   const percentual = eventosOrdenados[0]?.percentual?.toFixed(2) || "0";
@@ -2833,12 +2852,11 @@ function desenharCardsResumo(pdf, d, status, yInicial) {
     alturaCard,
     "EVENTO PRINCIPAL",
     principal,
-    `${percentual}%`
+    `${percentual}%`,
   );
 
   // 🔥 PERÍODO / ARQUIVO
-  const periodo =
-    `${formatarData(d.dataInicio)} até ${formatarData(d.dataFim)}`;
+  const periodo = `${formatarData(d.dataInicio)} até ${formatarData(d.dataFim)}`;
 
   desenharCardMultilinha(
     pdf,
@@ -2848,14 +2866,22 @@ function desenharCardsResumo(pdf, d, status, yInicial) {
     alturaCard,
     "PERIODO / ARQUIVO",
     periodo,
-    d.nomeArquivo || "-"
+    d.nomeArquivo || "-",
   );
 }
 // =======================
 // CARD SIMPLES
 // =======================
-function desenharCard(pdf, x, y, w, h, titulo, valor, corValor = [255, 255, 255]) {
-
+function desenharCard(
+  pdf,
+  x,
+  y,
+  w,
+  h,
+  titulo,
+  valor,
+  corValor = [255, 255, 255],
+) {
   // fundo
   pdf.setFillColor(20, 25, 40);
   pdf.roundedRect(x, y - 4, w, h, 2, 2, "F");
@@ -2874,7 +2900,6 @@ function desenharCard(pdf, x, y, w, h, titulo, valor, corValor = [255, 255, 255]
 // CARD MÙLTIPLAS LINHAS
 // ======================
 function desenharCardMultilinha(pdf, x, y, w, h, titulo, linha1, linha2) {
-
   // fundo
   pdf.setFillColor(20, 25, 40);
   pdf.roundedRect(x, y - 4, w, h, 2, 2, "F");
@@ -2909,19 +2934,10 @@ function desenharCardMultilinha(pdf, x, y, w, h, titulo, linha1, linha2) {
     pdf.text(
       linha2,
       x + 2,
-      y + 5 + alturaTexto // 🔥 posição dinâmica (corrige duplicação)
+      y + 5 + alturaTexto, // 🔥 posição dinâmica (corrige duplicação)
     );
   }
 }
-
-
-
-
-
-
-
-
-
 
 function gerarGraficoLinhaPDF(timeline) {
   const canvas = document.createElement("canvas");
@@ -2935,22 +2951,24 @@ function gerarGraficoLinhaPDF(timeline) {
   const chart = new Chart(ctx, {
     type: "line",
     data: {
-      labels: dados.map(d => d.data),
-      datasets: [{
-        data: dados.map(d => d.qtd),
-        borderColor: "#0077aa",
-        backgroundColor: "rgba(0,119,170,0.25)",
-        tension: 0.4,
-        fill: true
-      }]
+      labels: dados.map((d) => d.data),
+      datasets: [
+        {
+          data: dados.map((d) => d.qtd),
+          borderColor: "#0077aa",
+          backgroundColor: "rgba(0,119,170,0.25)",
+          tension: 0.4,
+          fill: true,
+        },
+      ],
     },
     options: {
       responsive: false,
       animation: false,
       plugins: {
-        legend: { display: false }
-      }
-    }
+        legend: { display: false },
+      },
+    },
   });
 
   const img = canvas.toDataURL("image/png", 1.0);
@@ -2958,16 +2976,6 @@ function gerarGraficoLinhaPDF(timeline) {
 
   return img;
 }
-
-
-
-
-
-
-
-
-
-
 
 function gerarGraficoPizzaPDF(eventos) {
   const canvas = document.createElement("canvas");
@@ -2979,21 +2987,21 @@ function gerarGraficoPizzaPDF(eventos) {
   const chart = new Chart(ctx, {
     type: "doughnut",
     data: {
-      labels: eventos.map(e => e.nome),
-      datasets: [{
-        data: eventos.map(e => e.qtd),
-        backgroundColor: eventos.map((_, i) =>
-          `hsl(${i * 30}, 70%, 50%)`
-        )
-      }]
+      labels: eventos.map((e) => e.nome),
+      datasets: [
+        {
+          data: eventos.map((e) => e.qtd),
+          backgroundColor: eventos.map((_, i) => `hsl(${i * 30}, 70%, 50%)`),
+        },
+      ],
     },
     options: {
       responsive: false,
       animation: false,
       plugins: {
-        legend: { position: "right" }
-      }
-    }
+        legend: { position: "right" },
+      },
+    },
   });
 
   const img = canvas.toDataURL("image/png", 1.0);
@@ -3002,36 +3010,23 @@ function gerarGraficoPizzaPDF(eventos) {
   return img;
 }
 
-
-
-
-
-
-
 function gerarInsights(d) {
   const top = [...d.eventos].sort((a, b) => b.qtd - a.qtd)[0];
 
   return {
     principal: top.nome,
     percentual: top.percentual.toFixed(2),
-    total: d.total
+    total: d.total,
   };
 }
 
-
-
-
-
-
 function formatarLabel(nome) {
-
   const palavras = nome.split(" ");
   const linhas = [];
 
   let linhaAtual = "";
 
-  palavras.forEach(palavra => {
-
+  palavras.forEach((palavra) => {
     // tenta adicionar palavra na linha atual
     const teste = linhaAtual ? linhaAtual + " " + palavra : palavra;
 
@@ -3042,7 +3037,6 @@ function formatarLabel(nome) {
     } else {
       linhaAtual = teste;
     }
-
   });
 
   // adiciona última linha
@@ -3052,200 +3046,84 @@ function formatarLabel(nome) {
   return linhas.slice(0, 4);
 }
 
-
-
-
-
-
-
-
-
-
-// ===============================
-// 👤 USUÁRIO LOGADO
-// ===============================
-document.addEventListener("DOMContentLoaded", () => {
-
-  const nome = localStorage.getItem("usuario");
-  const campo = document.getElementById("usuarioLogado");
-
-  campo.innerHTML = nome
-    ? `👤 ${nome} <span class="status online"></span>`
-    : `👤 Usuário <span class="status offline"></span>`;
-});
-
-
 // ===============================
 // 📊 PROGRESSO
 // ===============================
 function atualizarProgresso(atual, total) {
-  document.getElementById("progresso").innerText =
-    `${atual} / ${total}`;
+  document.getElementById("progresso").innerText = `${atual} / ${total}`;
 }
-
 
 // ===============================
 // 🚪 LOGOUT
 // ===============================
 async function logout() {
   try {
-
+    // Chamada API para logout no backend, que invalidará os cookies.
     await apiRequest("/auth/logout", {
-      method: "POST"
+      method: "POST",
+      credentials: "include", // Essencial para enviar cookies de sessão ao endpoint de logout
     });
-
+    console.log("✅ Logout concluído.");
   } catch (e) {
-    console.warn("Erro ao fazer logout no servidor");
+    console.warn("Erro ao fazer logout no servidor:", e);
+    // Mesmo com erro no servidor, o frontend deve limpar seu estado e redirecionar
   }
-
-  // 🔥 LIMPA TUDO (IMPORTANTE)
-  localStorage.removeItem("token");
-  localStorage.removeItem("refreshToken");
-  localStorage.removeItem("usuario");
-  localStorage.removeItem("perfil");
-
-  // 🔄 Redireciona
+  // 🔄 Redireciona para a página de login
   window.location.href = "login.html";
 }
 
-// ===================================
-// 👑 PAINEL MASTER - USUÁRIOS ONLINE
-// ===================================
-async function carregarUsuariosOnline() {
+let usuarioLogado = null;
+let intervalUsuarios = null;
 
-  const container = document.getElementById("usuariosOnlineMaster");
-  const usuarioAtual = localStorage.getItem("usuario");
-
-  if (!container) return;
-
-  container.innerHTML = "Carregando...";
-
-  try {
-
-    const response = await fetchWithAuthRetry(API_BASE + "/usuario/online");
-    const lista = await response.json();
-
-
-    if (!Array.isArray(lista) || lista.length === 0) {
-      container.innerHTML = "Nenhum usuário online";
-      return;
-    }
-
-    container.innerHTML = "";
-
-    lista.forEach(u => {
-
-      const statusClass = u.online ? "online" : "offline";
-
-      // 🔥 destaque do usuário atual
-      const isMe = u.nome === usuarioAtual ? "me" : "";
-
-      container.innerHTML += `
-        <div class="usuario-item ${statusClass} ${isMe}">
-          <span>👤 ${u.nome}</span>
-          <span class="status-dot"></span>
-        </div>
-      `;
-    });
-
-  } catch (e) {
-
-    console.error("Erro ao carregar usuários:", e);
-    container.innerHTML = "Erro ao carregar";
-
-  }
-}
 // ===============================
 // 👤 USUÁRIO LOGADO + DROPDOWN
 // ===============================
-document.addEventListener("DOMContentLoaded", () => {
-
-  const nome = localStorage.getItem("usuario");
-  const perfil = (localStorage.getItem("perfil") || "").toUpperCase();
-
+document.addEventListener("DOMContentLoaded", async () => {
   const campo = document.getElementById("usuarioLogado");
   const painel = document.getElementById("painelMaster");
+  const btnMaster = document.getElementById("btnAbrirMaster");
 
-  // ===============================
-  // 👤 RENDER USUÁRIO
-  // ===============================
-  campo.innerHTML = nome
-    ? `👤 ${nome} <span class="status online"></span>`
-    : `👤 Usuário <span class="status offline"></span>`;
+  if (!campo || !painel) return;
 
-  // ===============================
-  // 👑 SOMENTE MASTER TEM DROPDOWN
-  // ===============================
-  if (perfil === "MASTER") {
+  painel.classList.add("hidden");
 
-    painel.classList.remove("hidden");
+  try {
+    usuarioLogado = await apiRequest("/auth/me");
+    //console.log("Usuário recebido:", usuarioLogado);
+    console.log("Perfil:", usuarioLogado.perfil);
 
-    // 🔽 toggle estilo Discord
-    campo.addEventListener("click", () => {
-      painel.classList.toggle("hidden");
-    });
+    campo.innerHTML = `👤 ${usuarioLogado.nome}
+             <span class="status online"></span>`;
 
-    // 🔥 primeira carga
-    carregarUsuariosOnline();
+    if (usuarioLogado.perfil === "MASTER") {
+      btnMaster.classList.remove("hidden");
 
-    // 🔁 atualização automática
-    setInterval(carregarUsuariosOnline, 5000);
+      campo.addEventListener("click", () => {
+        painel.classList.toggle("hidden");
+      });
 
-  }
+      btnMaster.addEventListener("click", () => {
+        window.open("master.html", "_blank", "noopener,noreferrer");
+      });
 
-});
+      carregarUsuariosOnline();
 
-// =========================================
-// 👑 EXIBIR SOMENTE MASTER (CORRIGIDO)
-// =========================================
-
-// 🔁 CONTROLE DO INTERVALO MASTER
-let intervalUsuarios = null;
-
-document.addEventListener("DOMContentLoaded", () => {
-
-  // 🔐 Recupera perfil do usuário
-  let perfil = localStorage.getItem("perfil"); // ✅ TROCA CONST → LET
-
-  // 🔐 NORMALIZAÇÃO (evita erro null e case sensitive)
-  perfil = perfil ? perfil.toUpperCase() : null;
-
-  const painel = document.getElementById("painelMaster");
-
-  // 🔒 ESCONDE POR PADRÃO
-  if (painel) painel.classList.add("hidden");
-
-  // 👑 SOMENTE MASTER VÊ O PAINEL
-  if (perfil === "MASTER") {
-
-    console.log("👑 MASTER detectado");
-
-    painel.classList.remove("hidden");
-
-    // 🔥 primeira carga
-    carregarUsuariosOnline();
-
-    // 🔁 atualização automática a cada 5s
-    if (!intervalUsuarios) {
-      intervalUsuarios = setInterval(carregarUsuariosOnline, 5000);
+      if (!intervalUsuarios) {
+        intervalUsuarios = setInterval(carregarUsuariosOnline, 5000);
+      }
     }
-  } else {
-    console.log("👤 Usuário comum");
+  } catch (e) {
+    console.error(e);
   }
-
 });
-
-
 
 // ===================================
 // ⏱ MANTER USUÁRIO ATIVO (SEGURO)
 // ===================================
 setInterval(() => {
-
   fetchWithAuthRetry(API_BASE + "/usuario/heartbeat", {
-    method: "POST"
+    method: "POST",
   });
-
 }, 60000); // a cada 1 min
 
 function atualizarStatusTopo() {
@@ -3268,7 +3146,52 @@ function atualizarStatusTopo() {
 
   if (status === "NAO_APTO") {
     el.innerText = "Status: 🔴 Não Apto a Desconto";
-    el.classList.add("nao-apto");
+  }
+}
+
+// ===================================
+// 👑 PAINEL MASTER - USUÁRIOS ONLINE
+// ===================================
+async function carregarUsuariosOnline() {
+  const container = document.getElementById("usuariosOnlineMaster");
+  // Removido: const usuarioAtual = localStorage.getItem("usuario");
+  // O nome do usuário atual deve ser obtido de uma fonte segura em memória ou através de um endpoint.
+  // Por enquanto, usaremos um placeholder ou você pode implementar uma forma de obter isso.
+  const usuarioAtual = usuarioLogado ? usuarioLogado.nome : null;
+
+  if (!container) return;
+
+  container.innerHTML = "Carregando...";
+
+  try {
+    const response = await fetchWithAuthRetry(API_BASE + "/usuario/online", {
+      credentials: "include", // Essencial para enviar cookies de autenticação
+    });
+    const lista = await response.json();
+
+    if (!Array.isArray(lista) || lista.length === 0) {
+      container.innerHTML = "Nenhum usuário online";
+      return;
+    }
+
+    container.innerHTML = "";
+
+    lista.forEach((u) => {
+      const statusClass = u.online ? "online" : "offline";
+
+      // 🔥 destaque do usuário atual (se disponível)
+      const isMe = usuarioAtual && u.nome === usuarioAtual ? "me" : "";
+
+      container.innerHTML += `
+        <div class="usuario-item ${statusClass} ${isMe}">
+          <span>👤 ${u.nome}</span>
+          <span class="status-dot"></span>
+        </div>
+      `;
+    });
+  } catch (e) {
+    console.error("Erro ao carregar usuários:", e);
+    container.innerHTML = "Erro ao carregar";
   }
 }
 
@@ -3298,7 +3221,7 @@ const frases = {
     "Inicializando análise...",
     "Carregando estrutura de dados",
     "Preparando ambiente",
-    "Configurando sistema"
+    "Configurando sistema",
   ],
   processamento: [
     "Processando dados...",
@@ -3306,28 +3229,28 @@ const frases = {
     "Normalizando colunas",
     "Validando registros",
     "Filtrando inconsistências",
-    "Estruturando informações"
+    "Estruturando informações",
   ],
   analise: [
     "Detectando padrões",
     "Analisando comportamento",
     "Identificando anomalias",
     "Correlacionando dados",
-    "Aplicando regras inteligentes"
+    "Aplicando regras inteligentes",
   ],
   insight: [
     "Gerando insights",
     "Calculando métricas",
     "Extraindo informações relevantes",
     "Montando relatório",
-    "Organizando resultados"
+    "Organizando resultados",
   ],
   final: [
     "Análise concluída",
     "Processo finalizado",
     "Dados prontos para visualização",
-    "Tudo pronto 🚀"
-  ]
+    "Tudo pronto 🚀",
+  ],
 };
 
 // ===============================
@@ -3362,7 +3285,7 @@ function pegarFrase() {
 
   return {
     texto,
-    classe: obterClasse(etapa)
+    classe: obterClasse(etapa),
   };
 }
 
@@ -3379,9 +3302,12 @@ let atual = pegarFrase();
 // 🔄 LOOP PRINCIPAL
 // ===============================
 function loopDigitacao() {
-
   // aplica estilo da etapa
-  elemento.classList.remove("typing-processing", "typing-warning", "typing-success");
+  elemento.classList.remove(
+    "typing-processing",
+    "typing-warning",
+    "typing-success",
+  );
   elemento.classList.add(atual.classe);
 
   if (!apagando) {
@@ -3396,7 +3322,6 @@ function loopDigitacao() {
       setTimeout(loopDigitacao, 1200);
       return;
     }
-
   } else {
     // APAGANDO
     elemento.textContent = atual.texto.substring(0, charIndex - 1);

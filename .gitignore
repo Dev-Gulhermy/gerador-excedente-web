@@ -30,3 +30,6 @@ Thumbs.db
 # 🔐 CONFIGS SENSÍVEIS (OPCIONAL)
 # ===============================
 .env
+# Spring Boot
+src/main/resources/application.properties
+src/main/resources/application-dev.properties

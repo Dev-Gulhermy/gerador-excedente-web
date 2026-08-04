@@ -6,22 +6,34 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.geradorexcedente.auth.response.AuthResponse;
 import com.geradorexcedente.security.JwtUtil;
+import com.geradorexcedente.usuario.model.Usuario;
+import com.geradorexcedente.usuario.service.UsuarioService;
 
 @Service
 public class AuthService {
 
     /*
-     * Serviço responsável por:
-     * - Refresh de token
+     * ==========================================
+     * RESPONSABILIDADES:
+     * - Refresh token
+     * - Validar refresh token
+     * - Gerar novo access token
+     * ==========================================
      */
 
     private final JwtUtil jwtUtil;
 
+    private final UsuarioService usuarioService;
+
     // ==========================================
-    // 🔧 INJEÇÃO VIA CONSTRUTOR (CORRETO)
+    // 🔧 INJEÇÃO VIA CONSTRUTOR
     // ==========================================
-    public AuthService(JwtUtil jwtUtil) {
+    public AuthService(
+            JwtUtil jwtUtil,
+            UsuarioService usuarioService) {
+
         this.jwtUtil = jwtUtil;
+        this.usuarioService = usuarioService;
     }
 
     // ==========================================
@@ -29,17 +41,36 @@ public class AuthService {
     // ==========================================
     public AuthResponse refreshToken(String refreshToken) {
 
-        // valida refresh token
+        // ======================================
+        // 🔐 VALIDA ASSINATURA JWT
+        // ======================================
         if (!jwtUtil.validarToken(refreshToken)) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token inválido");
+
+            throw new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED,
+                    "Refresh token inválido");
         }
 
-        // extrai email
+        // ======================================
+        // 📌 EXTRAI EMAIL
+        // ======================================
         String email = jwtUtil.extrairEmail(refreshToken);
 
-        // gera novo access token
-        String newAccessToken = jwtUtil.generateToken(email);
+        // ======================================
+        // 🔍 BUSCA USUÁRIO NO BANCO
+        // ======================================
+        Usuario usuario = usuarioService.buscarPorEmail(email);
 
-        return new AuthResponse(newAccessToken, refreshToken);
+        // ======================================
+        // 🔐 GERA NOVO ACCESS TOKEN
+        // ======================================
+        String newAccessToken = jwtUtil.generateToken(usuario);
+
+        // ======================================
+        // ✅ RETORNO
+        // ======================================
+        return new AuthResponse(
+                newAccessToken,
+                refreshToken);
     }
 }

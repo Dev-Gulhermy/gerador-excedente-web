@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<configuration>
+
+    <!-- configuração padrão do Spring -->
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+
+    <!-- nosso appender -->
+    <appender
+            name="DASHBOARD"
+            class="com.geradorexcedente.master.logging.DashboardLogAppender"/>
+
+    <root level="INFO">
+
+        <appender-ref ref="CONSOLE"/>
+
+        <appender-ref ref="DASHBOARD"/>
+
+    </root>
+
+</configuration>

@@ -41,6 +41,8 @@ form.addEventListener("submit", async (e) => {
     // ⚠️ Validação antes de chamar API
     if (!validarCampos(email, senha)) return;
 
+
+    /*
     try {
 
         // ⏳ Estado de loading
@@ -49,10 +51,23 @@ form.addEventListener("submit", async (e) => {
         // 🌐 Chamada API
         const data = await apiLogin("/auth/login", { email, senha });
 
+        console.log("Resposta do backend:", data);
+
+        console.log("RETORNO:", data);
+        console.log("STATUS:", data.status);
+
+
         // ✅ Feedback de sucesso
-        sucessoLogin();
+        if (data.status === 200) {
+            console.log("✅ Login bem-sucedido. Redirecionando para index.html...");
+            window.location.href = "index.html";
+        } else {
+            console.error("❌ Falha no login. Status da resposta:", data.status);
+        }
 
     } catch (err) {
+
+        console.error("Erro ao realizar login:", err);
 
         // ❌ Tratamento de erro
         tratarErro(err);
@@ -60,6 +75,28 @@ form.addEventListener("submit", async (e) => {
     } finally {
 
         // 🔄 Restaura botão
+        desativarLoading();
+    }
+        */
+
+    try {
+        ativarLoading();
+        //console.log("ANTES DO LOGIN");
+        const data = await apiLogin("/auth/login", {
+            email,
+            senha
+        });
+        //console.log("DEPOIS DO LOGIN");
+        //console.log(data);
+        if (data.status === 200) {
+            console.log("ENTROU NO IF");
+            window.location.href = "index.html";
+        } else {
+            throw new Error(data?.message || "Erro desconhecido");
+        }
+    } catch (err) {
+        tratarErro(err);
+    } finally {
         desativarLoading();
     }
 });
@@ -164,7 +201,7 @@ function ativarLoading() {
 // 🔄 DESATIVA ESTADO DE LOADING
 // ============================================
 function desativarLoading() {
-    btn.innerText = "Sucesso";
+    btn.innerText = "Entrar"; // Restaurar texto do botão para "Entrar"
     btn.disabled = false;
 }
 
@@ -173,17 +210,13 @@ function desativarLoading() {
 // ✅ SUCESSO NO LOGIN
 // ============================================
 function sucessoLogin() {
-    btn.innerText = "Entrar";
-    btn.style.background = "#00ff88";
-
-    setTimeout(() => {
-        window.location.href = "index.html";
-    }, 500);
+    // Não é mais necessário lidar com o token ou perfil aqui.
+    // O backend já definiu os HttpOnly Cookies.
+    // Apenas redireciona para a página principal.
+    console.log("Redirecionando para index.html..."); // Adicionado log
+    window.location.href = "index.html";
 }
 
-
-// ============================================
-// ❌ TRATAMENTO DE ERROS
 // ============================================
 function tratarErro(err) {
 
@@ -201,3 +234,5 @@ function tratarErro(err) {
 
     erroGlobal.innerText = mensagem;
 }
+
+

@@ -91,6 +91,12 @@ body {
   z-index: 1000;
 }
 
+/* ================= BOTÂO MASTER ===================*/
+
+.btn-master {
+  margin-right: 10px;
+}
+
 /* ================= PRIMEIRA LINHA ================= */
 
 .topo-linha {
@@ -954,6 +960,7 @@ tbody::-webkit-scrollbar-thumb {
   position: relative;
   overflow: hidden;
   transition: all 0.3s ease;
+  width: 100%;
 }
 
 /* ================= AÇÕES FULL WIDTH ================= */
@@ -974,6 +981,11 @@ tbody::-webkit-scrollbar-thumb {
   gap: 15px;
   flex: 1 1 48%;
   /* 🔥 ocupa espaço disponível */
+  padding: 0 10px 0 10px;
+}
+
+.grupo-export {
+  width: 50%;
 }
 
 .grupo-export button,
@@ -989,6 +1001,7 @@ tbody::-webkit-scrollbar-thumb {
 .grupo-status {
   justify-content: flex-end;
   gap: 20px;
+  width: 50%;
 }
 
 /* HOVER */
@@ -1031,7 +1044,7 @@ tbody::-webkit-scrollbar-thumb {
 .btn-apto.ativo {
   background: var(--success);
   color: var(--text-dark);
-  box-shadow: 0 0 25px var(--success);
+  /* box-shadow: 0 0 25px var(--success); */
 }
 
 /* ================= BOTÃO NÃO APTO (VERMELHO NEON) ================= */
@@ -1050,7 +1063,7 @@ tbody::-webkit-scrollbar-thumb {
 .btn-nao-apto.ativo {
   background: var(--danger);
   color: var(--text-dark);
-  box-shadow: 0 0 25px var(--danger);
+  /* box-shadow: 0 0 25px var(--danger); */
 }
 
 @media screen and (max-width: 768px) {
@@ -1072,27 +1085,40 @@ tbody::-webkit-scrollbar-thumb {
 /* ================= PULSE NEON ================= */
 @keyframes neonPulseBtn {
   0% {
-    box-shadow: 0 0 8px currentColor;
+    box-shadow:
+      0 0 5px currentColor,
+      0 0 10px currentColor,
+      0 0 20px currentColor;
   }
 
   50% {
-    box-shadow: 0 0 25px currentColor;
+    box-shadow:
+      0 0 10px currentColor,
+      0 0 25px currentColor,
+      0 0 45px currentColor;
   }
 
   100% {
-    box-shadow: 0 0 8px currentColor;
+    box-shadow:
+      0 0 5px currentColor,
+      0 0 10px currentColor,
+      0 0 20px currentColor;
   }
 }
 
 .btn-apto.ativo {
-  animation: neonPulseBtn 1.2s infinite;
-  transform: scale(1.03);
+  animation: neonPulseBtn 1.5s ease-in-out infinite;
+  transform: scale(1.05);
 }
 
 .btn-nao-apto.ativo {
-  animation: neonPulseBtn 1.2s infinite;
-  transform: scale(1.03);
+
+  animation: neonPulseBtn 1.5s ease-in-out infinite;
+  transform: scale(1.05);
 }
+
+
+
 
 /* ================= ANIMAÇÃO DE ENTRADA ================= */
 

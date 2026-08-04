@@ -69,7 +69,7 @@
 
   <!-- Estilos -->
   <link rel="stylesheet" href="styles/main.css">
-  <script>
+ <script>
     // ==========================================
     // 🔐 PROTEÇÃO DE ROTA COM EXCEÇÃO PARA BOTS
     // ==========================================
@@ -78,18 +78,24 @@
     // acessem o conteúdo para gerar preview do link (Open Graph).
     //
     // Sem isso, o preview não aparece ao compartilhar o link.
-
     const isBot = /facebookexternalhit|WhatsApp|Slackbot|Twitterbot/i.test(navigator.userAgent);
 
     if (!isBot) {
-      const token = localStorage.getItem("token");
-
-      // Se não existir token → redireciona para login
-      if (!token) {
+      fetch(`${API_BASE}/auth/check-auth`, {
+    credentials: 'include'
+})
+      // Remove verificação de cookie (não funciona com HttpOnly)
+      // O backend já envia 401/403 se não autenticado
+       .then(response => {
+        if (!response.ok) {
+          window.location.href = "login.html";
+        }
+      })
+      .catch(() => {
         window.location.href = "login.html";
-      }
+      });
     }
-  </script>
+</script>
 
 </head>
 
@@ -121,6 +127,11 @@
 
       <!-- 🚪 LOGOUT -->
       <div class="logout-area">
+        <!-- 👑 BOTÃO MASTER -->
+        <button id="btnAbrirMaster" class="btn-master hidden">
+          👑 MASTER
+        </button>
+
         <button onclick="logout()" class="btn-logout">Sair</button>
       </div>
 
@@ -220,7 +231,7 @@
 
         <div class="card">
           <span>Intervalo de Transmissão</span>
-          <h2 id="intervalo">—</h>
+          <h2 id="intervalo">—</h2>
         </div>
         <!-- ===================================================== -->
         <!-- 🔥 CARD INTERVALO DE TRANSMISSÃO -->
@@ -234,8 +245,8 @@
         <!-- ===================================================== -->
         <div class="card card-meta">
           <span>Período / Arquivo</span>
-          <h2 id="periodo">—</h3>
-            <small id="arquivo">—</small>
+          <h2 id="periodo">—</h2>
+          <small id="arquivo">—</small>
         </div>
 
       </section>
@@ -328,15 +339,20 @@
   </footer>
 
 
+
   <!-- Bibliotecas locais -->
   <script src="assets/libs/chart.min.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style/dist/xlsx.bundle.js"></script>
   <script src="assets/libs/jspdf.umd.min.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2" defer crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1" defer></script>
   <!-- Script principal -->
   <script src="js/api.js" defer></script>
   <script src="js/script.js" defer></script>
+  <script src="js/master.js" defer></script>
+
+
+
 </body>
 
 </html>

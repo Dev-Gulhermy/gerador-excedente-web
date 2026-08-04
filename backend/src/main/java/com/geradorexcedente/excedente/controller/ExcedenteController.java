@@ -37,7 +37,6 @@ import org.slf4j.LoggerFactory;
  */
 @RestController
 @RequestMapping("/api/excedente")
-@CrossOrigin(origins = "*")
 public class ExcedenteController {
 
     private static final Logger logger = LoggerFactory.getLogger(ExcedenteController.class);
