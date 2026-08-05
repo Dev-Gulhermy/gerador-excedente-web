@@ -1,6 +1,7 @@
 # ===============================
 # ☕ JAVA / MAVEN
 # ===============================
+**/target/
 target/
 backend/target/
 *.class
