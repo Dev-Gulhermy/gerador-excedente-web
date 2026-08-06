@@ -108,24 +108,16 @@ public class AuthController {
                                 cookieConfig.createAccessTokenCookie(
                                                 loginResp.getToken())
                                                 .toString());
-                // log temporário
-                System.out.println(
-                                cookieConfig.createAccessTokenCookie(
-                                                loginResp.getToken())
-                                                .toString());
 
-                // 🔁 Refresh Token (7 dias)
+
+                // 🔁 Refresh Token (7 dias) 
                 response.addHeader(
                                 HttpHeaders.SET_COOKIE,
                                 cookieConfig.createRefreshTokenCookie(
                                                 loginResp.getRefreshToken())
                                                 .toString());
 
-                // log temporário
-                System.out.println(
-                                cookieConfig.createRefreshTokenCookie(
-                                                loginResp.getRefreshToken())
-                                                .toString());
+
 
                 // ================================================
                 // 📦 RESPOSTA (SEM TOKENS)
