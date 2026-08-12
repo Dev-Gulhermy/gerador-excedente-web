@@ -37,8 +37,8 @@ public class RegistroLog {
     // Dados da requisição
     // =========================================
 
-    // Logger
-    private String logger;
+    // console
+    private String console;
 
     // URI da requisição
     private String uri;
@@ -124,12 +124,12 @@ public class RegistroLog {
         this.thread = thread;
     }
 
-    public String getLogger() {
-        return logger;
+    public String getconsole() {
+        return console;
     }
 
-    public void setLogger(String logger) {
-        this.logger = logger;
+    public void setconsole(String console) {
+        this.console = console;
     }
 
     public String getUri() {
