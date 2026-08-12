@@ -1,358 +1,394 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
 
-<head>
-  <meta charset="UTF-8" />
+    <!-- Responsividade -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- Responsividade -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- SEO Básico -->
+    <title>Gerador de Excedente Satelital | Análise de Teleeventos CSV</title>
+    <meta
+      name="description"
+      content="Ferramenta web para análise de excedente satelital em comunicações de rastreadores, com base em arquivos CSV. Permite filtros por placa, período e tipo de comunicação."
+    />
 
-  <!-- SEO Básico -->
-  <title>Gerador de Excedente Satelital | Análise de Teleeventos CSV</title>
-  <meta name="description"
-    content="Ferramenta web para análise de excedente satelital em comunicações de rastreadores, com base em arquivos CSV. Permite filtros por placa, período e tipo de comunicação." />
+    <!----------------------------------------------------------->
 
+    <!-- ================= OPEN GRAPH ================= -->
+    <meta property="og:title" content="Gerador de Excedente Empresarial Web" />
+    <meta
+      property="og:description"
+      content="Ferramenta interativa para análise de excedente, simulação e tomada de decisão empresarial."
+    />
 
+    <meta
+      property="og:image"
+      content="https://gerador-excedente.netlify.app/assets/images/preview-excedente-1200-630.jpg"
+    />
 
-  <!----------------------------------------------------------->
+    <meta
+      property="og:image:secure_url"
+      content="https://gerador-excedente.netlify.app/assets/images/preview-excedente-1200-630.jpg"
+    />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
 
-  <!-- ================= OPEN GRAPH ================= -->
-  <meta property="og:title" content="Gerador de Excedente Empresarial Web" />
-  <meta property="og:description"
-    content="Ferramenta interativa para análise de excedente, simulação e tomada de decisão empresarial." />
+    <meta property="og:url" content="https://gerador-excedente.netlify.app" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="pt_BR" />
+    <meta property="og:site_name" content="Gerador de Excedente Web" />
 
-  <meta property="og:image"
-    content="https://gerador-excedente.netlify.app/assets/images/preview-excedente-1200-630.jpg" />
+    <!-- ================= TWITTER ================= -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Gerador de Excedente Empresarial Web" />
+    <meta
+      name="twitter:description"
+      content="Simule cenários e analise resultados empresariais de forma visual."
+    />
+    <meta
+      name="twitter:image"
+      content="https://gerador-excedente.netlify.app/assets/images/preview-excedente-1200-630.jpg"
+    />
 
-  <meta property="og:image:secure_url"
-    content="https://gerador-excedente.netlify.app/assets/images/preview-excedente-1200-630.jpg" />
-  <meta property="og:image:type" content="image/jpeg" />
-  <meta property="og:image:width" content="1200" />
-  <meta property="og:image:height" content="630" />
+    <!----------------------------------------------------------->
 
-  <meta property="og:url" content="https://gerador-excedente.netlify.app" />
-  <meta property="og:type" content="website" />
-  <meta property="og:locale" content="pt_BR" />
-  <meta property="og:site_name" content="Gerador de Excedente Web" />
+    <meta name="robots" content="index, follow" />
+    <meta name="author" content="Equipe de Suporte Especializado" />
 
-  <!-- ================= TWITTER ================= -->
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Gerador de Excedente Empresarial Web" />
-  <meta name="twitter:description" content="Simule cenários e analise resultados empresariais de forma visual." />
-  <meta name="twitter:image"
-    content="https://gerador-excedente.netlify.app/assets/images/preview-excedente-1200-630.jpg" />
+    <!-- Open Graph (mesmo útil em ambientes internos) -->
+    <meta property="og:title" content="Gerador de Excedente Satelital" />
+    <meta
+      property="og:description"
+      content="Validação de excedente satelital para análise de desconto com base em teleeventos CSV."
+    />
+    <meta property="og:type" content="website" />
 
-  <!----------------------------------------------------------->
+    <!-- Favicon padrão -->
+    <link rel="icon" href="assets/icons/favicon.ico" />
 
-  <meta name="robots" content="index, follow" />
-  <meta name="author" content="Equipe de Suporte Especializado" />
+    <!-- PNGs modernos -->
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href="assets/icons/favicon-32x32.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="16x16"
+      href="assets/icons/favicon-16x16.png"
+    />
 
-  <!-- Open Graph (mesmo útil em ambientes internos) -->
-  <meta property="og:title" content="Gerador de Excedente Satelital" />
-  <meta property="og:description"
-    content="Validação de excedente satelital para análise de desconto com base em teleeventos CSV." />
-  <meta property="og:type" content="website" />
+    <!-- Apple Touch (iOS) -->
+    <link rel="manifest" href="assets/icons/site.webmanifest" />
 
-  <!-- Favicon padrão -->
-  <link rel="icon" href="assets/icons/favicon.ico">
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
 
-  <!-- PNGs modernos -->
-  <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32x32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16x16.png">
+    <!-- Estilos -->
+    <link rel="stylesheet" href="styles/main.css" />
+  </head>
 
-  <!-- Apple Touch (iOS) -->
-  <link rel="manifest" href="assets/icons/site.webmanifest">
+  <body>
+    <!-- ================= HEADER ================= -->
+    <header class="topo fade-in delay-1">
+      <div class="topo-linha">
+        <!-- 👤 USUÁRIO / MASTER -->
+        <div class="usuario-area">
+          <!-- 👤 usuário comum (clicável para abrir dropdown) -->
+          <div id="usuarioLogado" class="usuario-logado"></div>
 
-  <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
-    rel="stylesheet">
-
-  <!-- Estilos -->
-  <link rel="stylesheet" href="styles/main.css">
- <script>
-    // ==========================================
-    // 🔐 PROTEÇÃO DE ROTA COM EXCEÇÃO PARA BOTS
-    // ==========================================
-    // Esta lógica impede acesso ao sistema sem autenticação.
-    // Porém, permite que bots (WhatsApp, Facebook, etc.)
-    // acessem o conteúdo para gerar preview do link (Open Graph).
-    //
-    // Sem isso, o preview não aparece ao compartilhar o link.
-    const isBot = /facebookexternalhit|WhatsApp|Slackbot|Twitterbot/i.test(navigator.userAgent);
-
-    if (!isBot) {
-      fetch(`${API_BASE}/auth/check-auth`, {
-    credentials: 'include'
-})
-      // Remove verificação de cookie (não funciona com HttpOnly)
-      // O backend já envia 401/403 se não autenticado
-       .then(response => {
-        if (!response.ok) {
-          window.location.href = "login.html";
-        }
-      })
-      .catch(() => {
-        window.location.href = "login.html";
-      });
-    }
-</script>
-
-</head>
-
-<body>
-
-  <!-- ================= HEADER ================= -->
-  <header class="topo fade-in delay-1">
-
-    <div class="topo-linha">
-
-      <!-- 👤 USUÁRIO / MASTER -->
-      <div class="usuario-area">
-
-        <!-- 👤 usuário comum (clicável para abrir dropdown) -->
-        <div id="usuarioLogado" class="usuario-logado"></div>
-
-        <!-- 👑 painel master (dropdown estilo Discord) -->
-        <div id="painelMaster" class="dropdown-master hidden">
-          <div class="dropdown-header">👥 Usuários Online</div>
-          <div id="usuariosOnlineMaster" class="lista-usuarios"></div>
+          <!-- 👑 painel master (dropdown estilo Discord) -->
+          <div id="painelMaster" class="dropdown-master hidden">
+            <div class="dropdown-header">👥 Usuários Online</div>
+            <div id="usuariosOnlineMaster" class="lista-usuarios"></div>
+          </div>
         </div>
 
-      </div>
+        <!-- 🧠 TÍTULO -->
+        <div class="titulo-topo">
+          <h1 class="gradient-title">Gerador de Excedente</h1>
+        </div>
 
-      <!-- 🧠 TÍTULO -->
-      <div class="titulo-topo">
-        <h1 class="gradient-title">Gerador de Excedente</h1>
-      </div>
-
-      <!-- 🚪 LOGOUT -->
-      <div class="logout-area">
-        <!-- 👑 BOTÃO MASTER -->
-        <button id="btnAbrirMaster" class="btn-master hidden">
-          👑 MASTER
-        </button>
-
-        <button onclick="logout()" class="btn-logout">Sair</button>
-      </div>
-
-    </div>
-
-  </header>
-
-  <!-- 🔽 SEGUNDA LINHA DO TOPO -->
-  <section class="topo-linha-2 fade-in delay-2" aria-label="Status do sistema">
-
-    <!-- 🧾 SUBTÍTULO / MENSAGEM DINÂMICA -->
-    <div class="subtitulo-topo">
-      <p id="typing-text" aria-live="polite"></p>
-    </div>
-
-    <!-- 📊 STATUS -->
-    <div id="statusTopo" class="status-topo" role="status" aria-live="polite">
-      Status: INDEFINIDO
-    </div>
-
-  </section>
-
-  <!-- ================= UPLOAD ================= -->
-  <main>
-    <div class="layout">
-
-      <div class="container fade-in delay-3">
-        <section class="upload">
-          <!-- Botão customizado para input file -->
-          <label for="csvFile" class="btn-file">Escolher arquivos</label>
-
-          <!-- Nome dos arquivos selecionados -->
-          <div class="arquivos-container">
-            <span id="nomeArquivos" class="arquivos-info"></span>
-          </div>
-
-          <!-- Input real (oculto) -->
-          <input type="file" id="csvFile" name="csvFile" accept=".csv,text/csv" multiple class="visually-hidden"
-            aria-describedby="descricaoUpload">
-          <p id="descricaoUpload" class="visually-hidden">
-            Selecione um ou mais arquivos CSV para processamento.
-          </p>
-
-
-          <button id="btnProcessar" onclick="enviar()">
-            <span id="textoBtn">Processar CSV(s)</span>
-            <span id="loader" class="loader"></span>
+        <!-- 🚪 LOGOUT -->
+        <div class="logout-area">
+          <!-- 👑 BOTÃO MASTER -->
+          <button id="btnAbrirMaster" class="btn-master hidden">
+            👑 MASTER
           </button>
 
+          <button onclick="logout()" class="btn-logout">Sair</button>
+        </div>
+      </div>
+    </header>
 
-          <div id="progresso" class="progresso">
-            0 / 0
+    <!-- 🔽 SEGUNDA LINHA DO TOPO -->
+    <section
+      class="topo-linha-2 fade-in delay-2"
+      aria-label="Status do sistema"
+    >
+      <!-- 🧾 SUBTÍTULO / MENSAGEM DINÂMICA -->
+      <div class="subtitulo-topo">
+        <p id="typing-text" aria-live="polite"></p>
+      </div>
+
+      <!-- 📊 STATUS -->
+      <div id="statusTopo" class="status-topo" role="status" aria-live="polite">
+        Status: INDEFINIDO
+      </div>
+    </section>
+
+    <!-- ================= UPLOAD ================= -->
+    <main>
+      <div class="layout">
+        <div class="container fade-in delay-3">
+          <section class="upload">
+            <!-- Botão customizado para input file -->
+            <label for="csvFile" class="btn-file">Escolher arquivos</label>
+
+            <!-- Nome dos arquivos selecionados -->
+            <div class="arquivos-container">
+              <span id="nomeArquivos" class="arquivos-info"></span>
+            </div>
+
+            <!-- Input real (oculto) -->
+            <input
+              type="file"
+              id="csvFile"
+              name="csvFile"
+              accept=".csv,text/csv"
+              multiple
+              class="visually-hidden"
+              aria-describedby="descricaoUpload"
+            />
+            <p id="descricaoUpload" class="visually-hidden">
+              Selecione um ou mais arquivos CSV para processamento.
+            </p>
+
+            <button id="btnProcessar" onclick="enviar()">
+              <span id="textoBtn">Processar CSV(s)</span>
+              <span id="loader" class="loader"></span>
+            </button>
+
+            <div id="progresso" class="progresso">0 / 0</div>
+          </section>
+
+          <!-- ================= FILTROS ================= -->
+
+          <!-- Filtro por tipo de comunicação -->
+          <section class="filtros">
+            <label for="filtroComunicacao"
+              >Filtrar por tipo de comunicação</label
+            >
+            <select id="filtroComunicacao" name="filtroComunicacao">
+              <option value="">Todos os Tipos de Comunicação</option>
+              <option value="Satélite">Satélite</option>
+              <option value="GPRS">GPRS</option>
+              <option value="Em memória">Em memória</option>
+            </select>
+
+            <!-- Filtro por placa (dinâmico) -->
+            <label for="filtroPlaca">Filtrar por placa</label>
+            <select
+              id="filtroPlaca"
+              name="filtroPlaca"
+              onchange="trocarPlaca()"
+            >
+              <option value="">Selecione a placa</option>
+            </select>
+
+            <!-- ================= CSV / PERÍODO ================= -->
+            <label for="filtroPeriodo">Filtrar por período</label>
+            <select
+              id="filtroPeriodo"
+              name="filtroPeriodo"
+              onchange="trocarPeriodo()"
+            >
+              <option value="">Selecione o período</option>
+            </select>
+          </section>
+        </div>
+
+        <!-- ================= CARDS ================= -->
+
+        <section class="cards fade-in delay-4" aria-labelledby="tituloCards">
+          <h2 id="tituloCards" class="visually-hidden">Resumo dos dados</h2>
+          <div class="card">
+            <span>Placa</span>
+            <h2 id="placa">—</h2>
           </div>
 
-        </section>
+          <div class="card">
+            <span>Total Televentos</span>
+            <h2 id="total">—</h2>
+          </div>
 
-        <!-- ================= FILTROS ================= -->
-
-
-        <!-- Filtro por tipo de comunicação -->
-        <section class="filtros">
-          <label for="filtroComunicacao">Filtrar por tipo de comunicação</label>
-          <select id="filtroComunicacao" name="filtroComunicacao">
-            <option value="">Todos os Tipos de Comunicação</option>
-            <option value="Satélite">Satélite</option>
-            <option value="GPRS">GPRS</option>
-            <option value="Em memória">Em memória</option>
-          </select>
-
-          <!-- Filtro por placa (dinâmico) -->
-          <label for="filtroPlaca">Filtrar por placa</label>
-          <select id="filtroPlaca" name="filtroPlaca" onchange="trocarPlaca()">
-            <option value="">Selecione a placa</option>
-          </select>
-
-          <!-- ================= CSV / PERÍODO ================= -->
-          <label for="filtroPeriodo">Filtrar por período</label>
-          <select id="filtroPeriodo" name="filtroPeriodo" onchange="trocarPeriodo()">
-            <option value="">Selecione o período</option>
-          </select>
+          <div class="card">
+            <span>Intervalo de Transmissão</span>
+            <h2 id="intervalo">—</h2>
+          </div>
+          <!-- ===================================================== -->
+          <!-- 🔥 CARD INTERVALO DE TRANSMISSÃO -->
+          <!-- ===================================================== -->
+          <div class="card destaque">
+            <span>Evento Principal</span>
+            <h2 id="principal">—</h2>
+          </div>
+          <!-- ===================================================== -->
+          <!-- 🔥 NOVO CARD - IDENTIFICAÇÃO / AUDITORIA DO PROCESSO -->
+          <!-- ===================================================== -->
+          <div class="card card-meta">
+            <span>Período / Arquivo</span>
+            <h2 id="periodo">—</h2>
+            <small id="arquivo">—</small>
+          </div>
         </section>
       </div>
 
-      <!-- ================= CARDS ================= -->
+      <!-- ================= CONTEÚDO ================= -->
 
-      <section class="cards fade-in delay-4" aria-labelledby="tituloCards">
-        <h2 id="tituloCards" class="visually-hidden">Resumo dos dados</h2>
-        <div class="card">
-          <span>Placa</span>
-          <h2 id="placa">—</h2>
+      <section class="conteudo fade-in delay-5">
+        <div id="graficoWrapper" class="grafico-wrapper">
+          <!-- Gráfico -->
+          <div id="graficoBarrasWrapper" class="grafico-container">
+            <!-- 📊 GRÁFICO DE BARRA (já existente) -->
+            <canvas
+              id="graficoBarras"
+              aria-label="Gráfico de distribuição de eventos em barras"
+              role="img"
+              >Seu navegador não suporta gráficos em canvas</canvas
+            >
+          </div>
+
+          <!-- 🥧 NOVO GRÁFICO DE PIZZA -->
+          <div id="graficoPizzaWrapper" class="grafico-container">
+            <canvas
+              id="graficoPizza"
+              aria-label="Gráfico de distribuição de eventos em formato pizza"
+              role="img"
+              >Seu navegador não suporta gráficos em canvas</canvas
+            >
+          </div>
+        </div>
+        <div id="graficoLinhaWrapperPai" class="grafico-wrapper">
+          <div id="graficoLinhaWrapper" class="grafico-container">
+            <canvas
+              id="graficoLinha"
+              aria-label="Gráfico de distirbuição em formaato linha"
+              role="img"
+              >Seu navegador não suporta gráficos em canvas</canvas
+            >
+          </div>
         </div>
 
-        <div class="card">
-          <span>Total Televentos</span>
-          <h2 id="total">—</h2>
-        </div>
+        <p class="visually-hidden">
+          O gráfico apresenta a distribuição percentual dos eventos processados.
+        </p>
 
-        <div class="card">
-          <span>Intervalo de Transmissão</span>
-          <h2 id="intervalo">—</h2>
-        </div>
-        <!-- ===================================================== -->
-        <!-- 🔥 CARD INTERVALO DE TRANSMISSÃO -->
-        <!-- ===================================================== -->
-        <div class="card destaque">
-          <span>Evento Principal</span>
-          <h2 id="principal">—</h2>
-        </div>
-        <!-- ===================================================== -->
-        <!-- 🔥 NOVO CARD - IDENTIFICAÇÃO / AUDITORIA DO PROCESSO -->
-        <!-- ===================================================== -->
-        <div class="card card-meta">
-          <span>Período / Arquivo</span>
-          <h2 id="periodo">—</h2>
-          <small id="arquivo">—</small>
-        </div>
+        <!-- Tabela -->
+        <table aria-describedby="descricaoTabela">
+          <!-- Descrição acessível da tabela (lida por leitores de tela) -->
+          <caption id="descricaoTabela" class="visually-hidden">
+            Tabela com detalhamento dos eventos, quantidades e percentuais
+            calculados a partir dos arquivos CSV processados.
+          </caption>
 
+          <thead>
+            <tr>
+              <!-- scope="col" indica cabeçalhos de coluna -->
+              <th scope="col">Evento</th>
+              <th scope="col">Qtd</th>
+              <th scope="col">%</th>
+            </tr>
+          </thead>
+
+          <!-- Corpo preenchido dinamicamente via JavaScript -->
+          <tbody id="tabelaDados"></tbody>
+        </table>
       </section>
+    </main>
 
-    </div>
-
-    <!-- ================= CONTEÚDO ================= -->
-
-    <section class="conteudo fade-in delay-5">
-
-      <div id="graficoWrapper" class="grafico-wrapper">
-        <!-- Gráfico -->
-        <div id="graficoBarrasWrapper" class="grafico-container">
-          <!-- 📊 GRÁFICO DE BARRA (já existente) -->
-          <canvas id="graficoBarras" aria-label="Gráfico de distribuição de eventos em barras" role="img">Seu navegador
-            não
-            suporta
-            gráficos em canvas</canvas>
+    <!-- ================= AÇÕES ================= -->
+    <footer class="container-footer fade-in delay-6">
+      <div class="acoes full-width">
+        <!-- ESQUERDA -->
+        <div class="grupo grupo-export">
+          <button onclick="exportarPDF()" class="btn-pdf">
+            📄 Exportar PDF
+          </button>
+          <button onclick="exportarExcel()" class="btn-excel">
+            📊 Exportar Excel
+          </button>
         </div>
 
-        <!-- 🥧 NOVO GRÁFICO DE PIZZA -->
-        <div id="graficoPizzaWrapper" class="grafico-container">
-          <canvas id="graficoPizza" aria-label="Gráfico de distribuição de eventos em formato pizza" role="img">Seu
-            navegador não suporta
-            gráficos em canvas</canvas>
+        <!-- DIREITA -->
+        <div class="grupo grupo-status">
+          <button id="btnApto" class="btn-apto" onclick="definirStatus('APTO')">
+            Apto a Desconto
+          </button>
+
+          <button
+            id="btnNaoApto"
+            class="btn-nao-apto"
+            onclick="definirStatus('NAO_APTO')"
+          >
+            Não Apto a Desconto
+          </button>
         </div>
       </div>
-      <div id="graficoLinhaWrapperPai" class="grafico-wrapper">
-        <div id="graficoLinhaWrapper" class="grafico-container">
-          <canvas id="graficoLinha" aria-label="Gráfico de distirbuição em formaato linha" role="img">Seu
-            navegador não suporta
-            gráficos em canvas</canvas>
-        </div>
-      </div>
+    </footer>
 
-      <p class="visually-hidden">
-        O gráfico apresenta a distribuição percentual dos eventos processados.
-      </p>
+    <!-- Bibliotecas locais -->
+    <script src="assets/libs/chart.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style/dist/xlsx.bundle.js"></script>
+    <script src="assets/libs/jspdf.umd.min.js" defer></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"
+      defer
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1"
+      defer
+    ></script>
+    <!-- Script principal -->
+    <script src="js/api.js" defer></script>
+    <script src="js/script.js" defer></script>
+    <script>
+      // ==========================================
+      // 🔐 PROTEÇÃO DE ROTA COM EXCEÇÃO PARA BOTS
+      // ==========================================
+      // Esta lógica impede acesso ao sistema sem autenticação.
+      // Porém, permite que bots (WhatsApp, Facebook, etc.)
+      // acessem o conteúdo para gerar preview do link (Open Graph).
+      //
+      // Sem isso, o preview não aparece ao compartilhar o link.
+      document.addEventListener("DOMContentLoaded", () => {
+        const isBot = /facebookexternalhit|WhatsApp|Slackbot|Twitterbot/i.test(
+          navigator.userAgent,
+        );
 
-
-      <!-- Tabela -->
-      <table aria-describedby="descricaoTabela">
-
-        <!-- Descrição acessível da tabela (lida por leitores de tela) -->
-        <caption id="descricaoTabela" class="visually-hidden">
-          Tabela com detalhamento dos eventos, quantidades e percentuais calculados
-          a partir dos arquivos CSV processados.
-        </caption>
-
-        <thead>
-          <tr>
-            <!-- scope="col" indica cabeçalhos de coluna -->
-            <th scope="col">Evento</th>
-            <th scope="col">Qtd</th>
-            <th scope="col">%</th>
-          </tr>
-        </thead>
-
-        <!-- Corpo preenchido dinamicamente via JavaScript -->
-        <tbody id="tabelaDados"></tbody>
-      </table>
-    </section>
-  </main>
-
-
-  <!-- ================= AÇÕES ================= -->
-  <footer class="container-footer fade-in delay-6">
-    <div class="acoes full-width">
-
-      <!-- ESQUERDA -->
-      <div class="grupo grupo-export">
-        <button onclick="exportarPDF()" class="btn-pdf">📄 Exportar PDF</button>
-        <button onclick="exportarExcel()" class="btn-excel">📊 Exportar Excel</button>
-      </div>
-
-
-
-      <!-- DIREITA -->
-      <div class="grupo grupo-status">
-        <button id="btnApto" class="btn-apto" onclick="definirStatus('APTO')">
-          Apto a Desconto
-        </button>
-
-        <button id="btnNaoApto" class="btn-nao-apto" onclick="definirStatus('NAO_APTO')">
-          Não Apto a Desconto
-        </button>
-      </div>
-
-    </div>
-  </footer>
-
-
-
-  <!-- Bibliotecas locais -->
-  <script src="assets/libs/chart.min.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style/dist/xlsx.bundle.js"></script>
-  <script src="assets/libs/jspdf.umd.min.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2" defer crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1" defer></script>
-  <!-- Script principal -->
-  <script src="js/api.js" defer></script>
-  <script src="js/script.js" defer></script>
-  <script src="js/master.js" defer></script>
-
-
-
-</body>
-
+        if (!isBot) {
+          fetch(`${API_BASE}/auth/check-auth`, {
+            credentials: "include",
+          })
+            // Remove verificação de cookie (não funciona com HttpOnly)
+            // O backend já envia 401/403 se não autenticado
+            .then((response) => {
+              if (!response.ok) {
+                window.location.href = "login.html";
+              }
+            })
+            .catch(() => {
+              window.location.href = "login.html";
+            });
+        }
+      });
+    </script>
+  </body>
 </html>
