@@ -1,12 +1,12 @@
 //==========================================
 //BASE URL AUTOMÁTICA
 //==========================================
-//globalThis.API_BASE =
-//  location.hostname === "localhost"
-//    ? "http://localhost:8080"
-//    : "https://gerador-excedente-web.onrender.com";
+globalThis.API_BASE =
+  location.hostname === "localhost"
+    ? "http://localhost:8080"
+    : "https://gerador-excedente-web.onrender.com";
 
-globalThis.API_BASE = "http://localhost:8080";
+//globalThis.API_BASE = "http://localhost:8080";
 
 // =========================================================
 // 🌐 API REQUEST
