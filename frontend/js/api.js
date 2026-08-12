@@ -1,81 +1,139 @@
 //==========================================
 //BASE URL AUTOMÁTICA
 //==========================================
-const API_BASE =
-  location.hostname === "localhost"
-    ? "http://localhost:8080"
-    : "https://gerador-excedente-web.onrender.com";
+//globalThis.API_BASE =
+//  location.hostname === "localhost"
+//    ? "http://localhost:8080"
+//    : "https://gerador-excedente-web.onrender.com";
 
-//const API_BASE = "http://localhost:8080";
+globalThis.API_BASE = "http://localhost:8080";
 
-// ==========================================
-// 🔁 FUNÇÃO AUXILIAR PARA OBTER COOKIE (APENAS PARA INFORMAÇÕES NÃO SENSÍVEIS)
-// ==========================================
-// REMOVIDO: Acesso direto a cookies HttpOnly não é permitido para segurança.
-// As credenciais serão enviadas automaticamente pelo navegador.
-// ==========================================
-// 📡 REQUEST PADRÃO COM RETRY + AUTH
-// ==========================================
+// =========================================================
+// 🌐 API REQUEST
+// =========================================================
+//
+// Responsabilidade:
+// Centralizar toda comunicação HTTP da aplicação.
+//
+// Esta é a ÚNICA função responsável por conversar
+// com o backend.
+//
+// Nenhum outro arquivo deve utilizar fetch()
+// diretamente.
+//
+// Utilizada por:
+//
+// • script.js
+// • login.js
+// • master.js
+// • cadastro.js
+// • qualquer outro módulo
+//
+// Recursos:
+//
+// ✅ Cookies HttpOnly
+// ✅ Refresh automático
+// ✅ Retry automático
+// ✅ Logs padronizados
+// ✅ Tratamento de erros
+// ✅ JSON
+// ✅ Texto
+// ✅ Qualquer método HTTP
+//
+// =========================================================
 async function apiRequest(endpoint, options = {}) {
-  // ==========================================
-  // 🔁 CHAMADA CENTRALIZADA
-  // Aqui acontece:
-  // - inclusão do token
-  // - refresh automático
-  // - retry em caso de erro
-  // ==========================================
-  const response = await fetchWithAuthRetry(API_BASE + endpoint, {
-    ...options,
-    credentials: "include", // Adicionado para enviar cookies
-    headers: {
-      "Content-Type": "application/json",
-      ...(options.headers || {}),
-    },
-  });
+  console.group(`🌐 API → ${endpoint}`);
 
-  // ==========================================
-  // ❌ ERRO REAL (NÃO AUTH)
-  // ==========================================
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(text || "Erro na requisição");
-  }
+  try {
+    // =================================================
+    // 🌍 URL FINAL
+    // =================================================
 
-  // ==========================================
-  // 📦 TRATAMENTO DE RESPOSTA
-  // ==========================================
-  const contentType = response.headers.get("content-type");
+    const url = API_BASE + endpoint;
 
-  if (contentType && contentType.includes("application/json")) {
-    const data = await response.json();
+    console.log("📤 Endpoint:", endpoint);
+    console.log("🌍 URL:", url);
 
-    // ==========================================
-    // SALVA TOKEN E USUÁRIO E PERFIL
-    // Essa seção foi removida pois os tokens são HttpOnly Cookies
-    // e as informações do usuário devem ser obtidas de forma segura.
-    // ==========================================
+    // =================================================
+    // ⚙ CONFIGURAÇÃO PADRÃO
+    // =================================================
 
-    // if (data.token) {
-    //     localStorage.setItem("token", data.token);
-    // }
+    const config = {
+      method: options.method || "GET",
 
-    // if (data.refreshToken) {
-    //     localStorage.setItem("refreshToken", data.refreshToken);
-    // }
+      credentials: "include",
 
-    // if (data.perfil) {
-    //     localStorage.setItem("perfil", data.perfil);
-    // }
+      headers: {
+        "Content-Type": "application/json",
 
-    // // nome do usuário (depende do retorno do backend)
-    // if (data.nome) {
-    //     localStorage.setItem("usuario", data.nome);
-    // }
+        ...(options.headers || {}),
+      },
+
+      body: options.body ?? undefined,
+    };
+
+    console.log("📡 Configuração:", config);
+
+    // =================================================
+    // 🚀 ENVIA REQUISIÇÃO
+    // =================================================
+
+    const response = await fetchWithAuthRetry(url, config);
+
+    console.log(`📥 ${response.status} ${response.statusText}`);
+
+    // =================================================
+    // ❌ ERRO HTTP
+    // =================================================
+
+    if (!response.ok) {
+      const erro = await response.text();
+
+      console.error("❌ Erro HTTP");
+
+      console.error("Status:", response.status);
+
+      console.error("Mensagem:", erro);
+
+      throw new Error(erro || `Erro HTTP ${response.status}`);
+    }
+
+    // =================================================
+    // 📦 TIPO DA RESPOSTA
+    // =================================================
+
+    const contentType = response.headers.get("content-type");
+
+    let data;
+
+    if (contentType && contentType.includes("application/json")) {
+      data = await response.json();
+    } else {
+      data = await response.text();
+    }
+
+    // =================================================
+    // ✅ LOG DA RESPOSTA
+    // =================================================
+
+    console.log(`✅ Resposta recebida (${endpoint})`);
+
+    console.log(data);
 
     return data;
-  }
+  } catch (error) {
+    // =================================================
+    // 🚨 ERRO GERAL
+    // =================================================
 
-  return response.text();
+    console.error("🚨 Falha na comunicação com a API");
+
+    console.error(error);
+
+    throw error;
+  } finally {
+    console.groupEnd();
+  }
 }
 
 async function fetchWithAuthRetry(url, options = {}, isRetry = false) {
