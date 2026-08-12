@@ -1,369 +1,299 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
-
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>MASTER PANEL</title>
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <!-- CSS -->
-    <link rel="stylesheet" href="styles/master.css">
+    <link rel="stylesheet" href="styles/master.css" />
     <title>MASTER PANEL</title>
-</head>
+  </head>
 
-<body>
+  <body>
     <!-- ========================================= -->
     <!-- 🧭 SIDEBAR -->
     <!-- ========================================= -->
     <aside class="sidebar">
+      <div class="logo-area">
+        <h2>👑 MASTER</h2>
+      </div>
 
-        <div class="logo-area">
-            <h2>👑 MASTER</h2>
-        </div>
+      <nav class="menu">
+        <button onclick="abrirAba('dashboard')">📊 Dashboard</button>
 
-        <nav class="menu">
+        <button onclick="abrirAba('usuarios')">👥 Usuários</button>
 
-            <button onclick="abrirAba('dashboard')">
-                📊 Dashboard
-            </button>
+        <button onclick="abrirAba('sessoes')">🟢 Sessões</button>
 
-            <button onclick="abrirAba('usuarios')">
-                👥 Usuários
-            </button>
+        <button onclick="abrirAba('logs')">📜 Logs</button>
 
-            <button onclick="abrirAba('sessoes')">
-                🟢 Sessões
-            </button>
+        <button onclick="abrirAba('seguranca')">🔐 Segurança</button>
 
-            <button onclick="abrirAba('logs')">
-                📜 Logs
-            </button>
+        <button onclick="abrirAba('sistema')">⚙️ Sistema</button>
 
-            <button onclick="abrirAba('seguranca')">
-                🔐 Segurança
-            </button>
+        <button onclick="abrirAba('auditoria')">🕵️ Auditoria</button>
 
-            <button onclick="abrirAba('sistema')">
-                ⚙️ Sistema
-            </button>
-
-            <button onclick="abrirAba('auditoria')">
-                🕵️ Auditoria
-            </button>
-
-            <button onclick="abrirAba('config')">
-                🧩 Configurações
-            </button>
-
-        </nav>
-
+        <button onclick="abrirAba('config')">🧩 Configurações</button>
+      </nav>
     </aside>
 
     <!-- ========================================= -->
     <!-- 🖥️ CONTEÚDO -->
     <!-- ========================================= -->
     <main class="main-content">
+      <!-- ========================================= -->
+      <!-- 🔝 TOPBAR -->
+      <!-- ========================================= -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <h1 id="tituloPagina">Dashboard</h1>
+        </div>
 
-        <!-- ========================================= -->
-        <!-- 🔝 TOPBAR -->
-        <!-- ========================================= -->
-        <header class="topbar">
+        <div class="topbar-right">
+          <div class="status-server">🟢 Sistema Online</div>
 
-            <div class="topbar-left">
-                <h1 id="tituloPagina">Dashboard</h1>
+          <div class="usuario-master">👑 MASTER</div>
+        </div>
+      </header>
+
+      <!-- ========================================= -->
+      <!-- 📊 DASHBOARD -->
+      <!-- ========================================= -->
+      <section id="dashboard" class="pagina-master">
+        <div class="cards-grid">
+          <div class="card-master">
+            <span>Usuários Online</span>
+            <h2 id="usuariosOnline">0</h2>
+          </div>
+
+          <div class="card-master">
+            <span>Total Usuários</span>
+            <h2 id="usuariosTotal">0</h2>
+          </div>
+
+          <div class="card-master">
+            <span>Memória JVM</span>
+            <h2 id="memoriaJvm">0 MB</h2>
+          </div>
+
+          <div class="card-master">
+            <span>CPU</span>
+            <h2 id="cpuServidor">0%</h2>
+          </div>
+        </div>
+
+        <!-- gráficos -->
+        <div class="graficos-grid">
+          <div class="grafico-box">
+            <canvas id="graficoUsuarios"></canvas>
+          </div>
+
+          <div class="grafico-box">
+            <canvas id="graficoMemoria"></canvas>
+          </div>
+
+          <div class="grafico-box">
+            <canvas id="graficoCpu"></canvas>
+          </div>
+
+          <div class="grafico-box">
+            <canvas id="graficoTempo"></canvas>
+          </div>
+
+          <div class="grafico-box">
+            <canvas id="graficoRpm"></canvas>
+          </div>
+
+          <div class="grafico-box">
+            <canvas id="graficoStatusHttp"></canvas>
+          </div>
+
+          <div class="grafico-box">
+            <canvas id="graficoLogs"></canvas>
+          </div>
+
+          <div class="grafico-box">
+            <canvas id="graficoSessoes"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================= -->
+      <!-- 👥 USUÁRIOS -->
+      <!-- ========================================= -->
+      <section id="usuarios" class="pagina-master hidden">
+        <div class="toolbar">
+          <input type="text" id="buscaUsuarios" placeholder="Buscar usuário" />
+        </div>
+
+        <table class="master-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nome</th>
+              <th>Email</th>
+              <th>Perfil</th>
+              <th>Status</th>
+              <th>Online</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+
+          <tbody id="tbodyUsuarios"></tbody>
+        </table>
+      </section>
+
+      <!-- ========================================= -->
+      <!-- 🟢 SESSÕES -->
+      <!-- ========================================= -->
+      <section id="sessoes" class="pagina-master hidden">
+        <table class="master-table">
+          <thead>
+            <tr>
+              <th>Usuário</th>
+              <th>IP</th>
+              <th>Dispositivo</th>
+              <th>Último acesso</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+
+          <tbody id="tbodySessoes"></tbody>
+        </table>
+      </section>
+
+      <!-- ========================================= -->
+      <!-- 📜 LOGS -->
+      <!-- ========================================= -->
+      <section id="logs" class="pagina-master hidden">
+        <div class="logs-container" id="logsContainer"></div>
+      </section>
+
+      <!-- ========================================= -->
+      <!-- 🔐 SEGURANÇA -->
+      <!-- ========================================= -->
+      <section id="seguranca" class="pagina-master hidden">
+        <div class="security-grid">
+          <div class="security-card">
+            <h3>Tentativas Login</h3>
+            <div id="tentativasLogin"></div>
+          </div>
+
+          <div class="security-card">
+            <h3>IPs Suspeitos</h3>
+            <div id="ipsSuspeitos"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================= -->
+      <!-- ⚙️ SISTEMA -->
+      <!-- ========================================= -->
+      <section id="sistema" class="pagina-master hidden">
+        <div class="system-grid">
+          <div class="system-card">
+            <h3>Scheduler</h3>
+            <p>ONLINE</p>
+          </div>
+
+          <div class="system-card">
+            <h3>Banco</h3>
+            <p>ONLINE</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================= -->
+      <!-- 🕵️ AUDITORIA -->
+      <!-- ========================================= -->
+      <section id="auditoria" class="pagina-master hidden">
+        <table class="master-table">
+          <thead>
+            <tr>
+              <th>Usuário</th>
+              <th>Ação</th>
+              <th>Alvo</th>
+              <th>Resultado</th>
+              <th>Data</th>
+            </tr>
+          </thead>
+
+          <tbody id="tbodyAuditoria"></tbody>
+        </table>
+      </section>
+
+      <!-- ========================================= -->
+      <!-- 🧩 CONFIGURAÇÕES -->
+      <!-- ========================================= -->
+      <section id="config" class="pagina-master hidden">
+        <div class="config-container">
+          <div class="config-card">
+            <h3>🔐 Segurança</h3>
+            <div class="config-item">
+              <label>Política de Senhas</label>
+              <p>Mínimo 8 caracteres, números e símbolos</p>
             </div>
-
-            <div class="topbar-right">
-
-                <div class="status-server">
-                    🟢 Sistema Online
-                </div>
-
-                <div class="usuario-master">
-                    👑 MASTER
-                </div>
-
+            <div class="config-item">
+              <label>Sessão Timeout</label>
+              <p>1 hora de inatividade</p>
             </div>
+          </div>
 
-        </header>
-
-        <!-- ========================================= -->
-        <!-- 📊 DASHBOARD -->
-        <!-- ========================================= -->
-        <section id="dashboard" class="pagina-master">
-
-            <div class="cards-grid">
-
-                <div class="card-master">
-                    <span>Usuários Online</span>
-                    <h2 id="usuariosOnline">0</h2>
-                </div>
-
-                <div class="card-master">
-                    <span>Total Usuários</span>
-                    <h2 id="usuariosTotal">0</h2>
-                </div>
-
-                <div class="card-master">
-                    <span>Memória JVM</span>
-                    <h2 id="memoriaJvm">0 MB</h2>
-                </div>
-
-                <div class="card-master">
-                    <span>CPU</span>
-                    <h2 id="cpuServidor">0%</h2>
-                </div>
-
+          <div class="config-card">
+            <h3>📊 Relatórios</h3>
+            <div class="config-item">
+              <label>Auditoria CSV</label>
+              <button onclick="exportarAuditoria()" class="btn-sm">
+                📥 Baixar
+              </button>
             </div>
-
-            <!-- gráficos -->
-            <div class="graficos-grid">
-
-                <div class="grafico-box">
-                    <canvas id="graficoUsuarios"></canvas>
-                </div>
-
-                <div class="grafico-box">
-                    <canvas id="graficoMemoria"></canvas>
-                </div>
-
-                <div class="grafico-box">
-                    <canvas id="graficoCpu"></canvas>
-                 </div>
-
-                <div class="grafico-box">
-                    <canvas id="graficoTempo"></canvas>
-                </div>
-
-                <div class="grafico-box">
-                    <canvas id="graficoRpm"></canvas>
-                </div>
-
-                <div class="grafico-box">
-                    <canvas id="graficoStatusHttp"></canvas>
-                </div>
-
-                <div class="grafico-box">
-                    <canvas id="graficoLogs"></canvas>
-                </div>
-
-                <div class="grafico-box">
-                    <canvas id="graficoSessoes"></canvas>
-                </div>
-
+            <div class="config-item">
+              <label>Logs do Sistema</label>
+              <button onclick="exportarLogs()" class="btn-sm">📥 Baixar</button>
             </div>
+          </div>
 
-        </section>
-
-        <!-- ========================================= -->
-        <!-- 👥 USUÁRIOS -->
-        <!-- ========================================= -->
-        <section id="usuarios" class="pagina-master hidden">
-
-            <div class="toolbar">
-
-                <input type="text" id="buscaUsuarios" placeholder="Buscar usuário">
-
+          <div class="config-card">
+            <h3>⚙️ Sistema</h3>
+            <div class="config-item">
+              <label>API Version</label>
+              <p id="apiVersion">v1.0.0</p>
             </div>
-
-            <table class="master-table">
-
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Nome</th>
-                        <th>Email</th>
-                        <th>Perfil</th>
-                        <th>Status</th>
-                        <th>Online</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-
-                <tbody id="tbodyUsuarios">
-                </tbody>
-
-            </table>
-
-        </section>
-
-        <!-- ========================================= -->
-        <!-- 🟢 SESSÕES -->
-        <!-- ========================================= -->
-        <section id="sessoes" class="pagina-master hidden">
-
-            <table class="master-table">
-
-                <thead>
-                    <tr>
-                        <th>Usuário</th>
-                        <th>IP</th>
-                        <th>Dispositivo</th>
-                        <th>Último acesso</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-
-                <tbody id="tbodySessoes"></tbody>
-
-            </table>
-
-        </section>
-
-        <!-- ========================================= -->
-        <!-- 📜 LOGS -->
-        <!-- ========================================= -->
-        <section id="logs" class="pagina-master hidden">
-
-            <div class="logs-container" id="logsContainer">
-
+            <div class="config-item">
+              <label>Último Deploy</label>
+              <p id="lastDeploy">—</p>
             </div>
-
-        </section>
-
-        <!-- ========================================= -->
-        <!-- 🔐 SEGURANÇA -->
-        <!-- ========================================= -->
-        <section id="seguranca" class="pagina-master hidden">
-
-            <div class="security-grid">
-
-                <div class="security-card">
-                    <h3>Tentativas Login</h3>
-                    <div id="tentativasLogin"></div>
-                </div>
-
-                <div class="security-card">
-                    <h3>IPs Suspeitos</h3>
-                    <div id="ipsSuspeitos"></div>
-                </div>
-
-            </div>
-
-        </section>
-
-        <!-- ========================================= -->
-        <!-- ⚙️ SISTEMA -->
-        <!-- ========================================= -->
-        <section id="sistema" class="pagina-master hidden">
-
-            <div class="system-grid">
-
-                <div class="system-card">
-                    <h3>Scheduler</h3>
-                    <p>ONLINE</p>
-                </div>
-
-                <div class="system-card">
-                    <h3>Banco</h3>
-                    <p>ONLINE</p>
-                </div>
-
-            </div>
-
-        </section>
-
-        <!-- ========================================= -->
-        <!-- 🕵️ AUDITORIA -->
-        <!-- ========================================= -->
-        <section id="auditoria" class="pagina-master hidden">
-
-            <table class="master-table">
-
-                <thead>
-                    <tr>
-                        <th>Usuário</th>
-                        <th>Ação</th>
-                        <th>Alvo</th>
-                        <th>Resultado</th>
-                        <th>Data</th>
-                    </tr>
-                </thead>
-
-                <tbody id="tbodyAuditoria"></tbody>
-
-            </table>
-
-        </section>
-
-        <!-- ========================================= -->
-        <!-- 🧩 CONFIGURAÇÕES -->
-        <!-- ========================================= -->
-        <section id="config" class="pagina-master hidden">
-
-            <div class="config-container">
-
-                <div class="config-card">
-                    <h3>🔐 Segurança</h3>
-                    <div class="config-item">
-                        <label>Política de Senhas</label>
-                        <p>Mínimo 8 caracteres, números e símbolos</p>
-                    </div>
-                    <div class="config-item">
-                        <label>Sessão Timeout</label>
-                        <p>1 hora de inatividade</p>
-                    </div>
-                </div>
-
-                <div class="config-card">
-                    <h3>📊 Relatórios</h3>
-                    <div class="config-item">
-                        <label>Auditoria CSV</label>
-                        <button onclick="exportarAuditoria()" class="btn-sm">📥 Baixar</button>
-                    </div>
-                    <div class="config-item">
-                        <label>Logs do Sistema</label>
-                        <button onclick="exportarLogs()" class="btn-sm">📥 Baixar</button>
-                    </div>
-                </div>
-
-                <div class="config-card">
-                    <h3>⚙️ Sistema</h3>
-                    <div class="config-item">
-                        <label>API Version</label>
-                        <p id="apiVersion">v1.0.0</p>
-                    </div>
-                    <div class="config-item">
-                        <label>Último Deploy</label>
-                        <p id="lastDeploy">—</p>
-                    </div>
-                </div>
-
-            </div>
-
-        </section>
-
+          </div>
+        </div>
+      </section>
     </main>
 
     <!-- ========================================= -->
     <!-- 🔥 MODAL GLOBAL -->
     <!-- ========================================= -->
     <div id="modalGlobal" class="modal hidden">
-
-        <div class="modal-content">
-
-            <div class="modal-header">
-                <h2 id="modalTitulo"></h2>
-            </div>
-
-            <div class="modal-body" id="modalBody"></div>
-
-            <div class="modal-footer">
-                <button onclick="fecharModal()">
-                    Fechar
-                </button>
-            </div>
-
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="modalTitulo"></h2>
         </div>
 
+        <div class="modal-body" id="modalBody"></div>
+
+        <div class="modal-footer">
+          <button onclick="fecharModal()">Fechar</button>
+        </div>
+      </div>
     </div>
 
     <!-- ========================================= -->
     <!-- JS -->
     <!-- ========================================= -->
     <script src="assets/libs/chart.min.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/logger.js"></script>
     <script src="js/master.js"></script>
-</body>
-
+  </body>
 </html>

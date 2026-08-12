@@ -1,4 +1,6 @@
-/**
+//Logger.log(location.pathname);
+
+/*
  * ================================================
  * 👑 MASTER PANEL - MASTER.JS
  * ================================================
@@ -30,7 +32,6 @@
 // 🔧 CONFIGURAÇÃO
 // ================================================
 
-const API_BASE = "http://localhost:8080";
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
 
 // Cache de dados
@@ -57,13 +58,19 @@ async function verificarAutenticacao() {
   try {
     const usuario = await apiRequest("/auth/me");
 
+    APP_CONFIG.SESSION.authenticated = true;
+
+    APP_CONFIG.SESSION.user = usuario;
+
+    APP_CONFIG.SESSION.debug = APP_CONFIG.IS_DEV || usuario.perfil === "MASTER";
+
     if (usuario.perfil !== "MASTER") {
       window.location.href = "login.html";
 
       return false;
     }
 
-    console.log("👑 MASTER autenticado");
+    Logger.auth("MASTER autenticado");
 
     return true;
   } catch (e) {
@@ -72,59 +79,6 @@ async function verificarAutenticacao() {
     window.location.href = "login.html";
 
     return false;
-  }
-}
-
-// ================================================
-// 📡 REQUISIÇÕES HTTP
-// ================================================
-
-/**
- * Faz requisição para API com tratamento de erro
- *
- * @param {string} endpoint - URL da API
- * @param {object} options - Opções do fetch
- * @returns {Promise<object>} Dados da resposta
- *
- * Segurança:
- * - Envia token no header Authorization
- * - Usa credentials: 'include' para cookies
- * - Auto-logout se 401 (sessão expirada)
- */
-async function apiRequest(endpoint, options = {}) {
-  try {
-    const response = await fetch(API_BASE + endpoint, {
-      method: options.method || "GET",
-      headers: {
-        "Content-Type": "application/json",
-        ...options.headers,
-      },
-      credentials: "include", // Envia cookies
-      body: options.body ? JSON.stringify(options.body) : null,
-    });
-
-    // ⚠️ Sessão expirada
-    if (response.status === 401) {
-      console.warn("⚠️ Sessão expirada (401)");
-      tokenExpirado = true;
-      logout("Sua sessão expirou. Faça login novamente.");
-      throw new Error("Sessão expirada");
-    }
-
-    // ❌ Erro servidor
-    if (!response.ok) {
-      const erro = await response.text();
-      console.error("❌ Erro na API:", response.status, erro);
-      throw new Error(`Erro ${response.status}: ${erro}`);
-    }
-
-    const data = await response.json();
-    console.log("✅ Resposta recebida:", endpoint, data);
-    return data;
-  } catch (error) {
-    console.error("❌ Erro na requisição:", error);
-    mostrarErro("Erro ao conectar com servidor: " + error.message);
-    throw error;
   }
 }
 
@@ -144,7 +98,7 @@ async function apiRequest(endpoint, options = {}) {
  * 4. Carrega dados (com cache)
  */
 function abrirAba(aba) {
-  console.log("🔄 Abrindo aba:", aba);
+  Logger.master("Abrindo aba:", aba);
 
   // Esconde todas as abas
   document.querySelectorAll(".pagina-master").forEach((el) => {
@@ -256,7 +210,7 @@ async function carregarDashboard() {
       cache.dashboard.data &&
       Date.now() - cache.dashboard.time < CACHE_DURATION
     ) {
-      console.log("📦 Dashboard carregado do cache");
+      Logger.cache("Dashboard carregado do cache");
       renderizarDashboard(cache.dashboard.data);
       return;
     }
@@ -296,7 +250,7 @@ function renderizarDashboard(data) {
 
   atualizarGraficos();
 
-  console.log("✅ Dashboard renderizado");
+  Logger.dashboard("Dashboard renderizado");
 }
 
 // =========================================
@@ -344,7 +298,7 @@ const graficos = {
 };
 
 function atualizarHistorico(data) {
-  console.log("Dashboard recebido:", data);
+  Logger.dashboard("Dashboard recebido:", data);
   const agora = new Date().toLocaleTimeString("pt-BR", {
     hour: "2-digit",
     minute: "2-digit",
@@ -429,7 +383,14 @@ function inicializarGraficos() {
 // GrÁFICO USUÀRIOS
 //=========================================
 function criarGraficoUsuarios() {
-  const ctx = document.getElementById("graficoUsuarios").getContext("2d");
+  const canvas = document.getElementById("graficoUsuarios");
+
+  if (!canvas) {
+    console.error("❌ Canvas gráficoUsuarios não encontrado");
+    return;
+  }
+
+  const ctx = canvas.getContext("2d");
 
   graficos.usuarios = new Chart(ctx, {
     type: "line",
@@ -462,9 +423,16 @@ function criarGraficoUsuarios() {
 // 💾 GRÁFICO - MEMÓRIA JVM
 // -----------------------------------------
 function criarGraficoMemoria() {
-  const ctxMemoria = document.getElementById("graficoMemoria").getContext("2d");
+  const canvas = document.getElementById("graficoMemoria");
 
-  graficos.memoria = new Chart(ctxMemoria, {
+  if (!canvas) {
+    console.error("❌ Canvas gráficoMemoria não encontrado");
+    return;
+  }
+
+  const ctx = canvas.getContext("2d");
+
+  graficos.memoria = new Chart(ctx, {
     type: "line",
 
     data: {
@@ -501,7 +469,14 @@ function criarGraficoMemoria() {
 // 🖥️ GRÁFICO - CPU
 // =========================================
 function criarGraficoCpu() {
-  const ctx = document.getElementById("graficoCpu").getContext("2d");
+  const canvas = document.getElementById("graficoCpu");
+
+  if (!canvas) {
+    console.error("❌ Canvas gráficoCpu não encontrado");
+    return;
+  }
+
+  const ctx = canvas.getContext("2d");
 
   graficos.cpu = new Chart(ctx, {
     type: "line",
@@ -540,7 +515,14 @@ function criarGraficoCpu() {
 // ⏱️ GRÁFICO - TEMPO MÉDIO
 // =========================================
 function criarGraficoTempo() {
-  const ctx = document.getElementById("graficoTempo").getContext("2d");
+  const canvas = document.getElementById("graficoTempo");
+
+  if (!canvas) {
+    console.error("❌ Canvas gráficoTempo não encontrado");
+    return;
+  }
+
+  const ctx = canvas.getContext("2d");
 
   graficos.tempo = new Chart(ctx, {
     type: "line",
@@ -579,7 +561,14 @@ function criarGraficoTempo() {
 // 🖥️ GRÁFICODE LOGS - LOGS
 // =========================================
 function criarGraficoLogs() {
-  const ctx = document.getElementById("graficoLogs").getContext("2d");
+  const canvas = document.getElementById("graficoLogs");
+
+  if (!canvas) {
+    console.error("❌ Canvas gráficoLogs não encontrado");
+    return;
+  }
+
+  const ctx = canvas.getContext("2d");
 
   graficos.logs = new Chart(ctx, {
     type: "bar",
@@ -606,7 +595,14 @@ function criarGraficoLogs() {
 // 🖥️ REQUISIÇÔES POR MINUTO - RPM
 // =========================================
 function criarGraficoRpm() {
-  const ctx = document.getElementById("graficoRpm").getContext("2d");
+  const canvas = document.getElementById("graficoRpm");
+
+  if (!canvas) {
+    console.error("❌ Canvas gráficoRpm não encontrado");
+    return;
+  }
+
+  const ctx = canvas.getContext("2d");
 
   graficos.rpm = new Chart(ctx, {
     type: "line",
@@ -645,7 +641,14 @@ function criarGraficoRpm() {
 // 🖥️ STATUS HTTP
 // =========================================
 function criarGraficoStatusHttp() {
-  const ctx = document.getElementById("graficoStatusHttp").getContext("2d");
+  const canvas = document.getElementById("graficoStatusHttp");
+
+  if (!canvas) {
+    console.error("❌ Canvas gráficoStatusHttp não encontrado");
+    return;
+  }
+
+  const ctx = canvas.getContext("2d");
 
   graficos.statusHttp = new Chart(ctx, {
     type: "bar",
@@ -679,7 +682,14 @@ function criarGraficoStatusHttp() {
 // 🔄 GRÁFICO SESSOES
 // =========================================
 function criarGraficoSessoes() {
-  const ctx = document.getElementById("graficoSessoes").getContext("2d");
+  const canvas = document.getElementById("graficoSessoes");
+
+  if (!canvas) {
+    console.error("❌ Canvas gráficoSessoes não encontrado");
+    return;
+  }
+
+  const ctx = canvas.getContext("2d");
 
   graficos.sessoes = new Chart(ctx, {
     type: "doughnut",
@@ -934,7 +944,7 @@ async function carregarUsuarios() {
       cache.usuarios.data &&
       Date.now() - cache.usuarios.time < CACHE_DURATION
     ) {
-      console.log("📦 Usuários carregados do cache");
+      Logger.cache("Usuários carregados do cache");
       renderizarUsuarios(cache.usuarios.data);
       return;
     }
@@ -993,7 +1003,7 @@ function renderizarUsuarios(usuarios) {
     )
     .join("");
 
-  console.log("✅ Usuários renderizados:", usuarios.length);
+  Logger.master("Usuários renderizados:", usuarios.length);
 }
 
 // ================================================
@@ -1006,7 +1016,7 @@ function renderizarUsuarios(usuarios) {
 async function carregarSessoes() {
   try {
     const sessoes = await apiRequest("/api/master/sessoes");
-    console.log("Sessões:", sessoes);
+    Logger.master("Sessões:", sessoes);
 
     // TODO: Implementar renderização de sessões
   } catch (error) {
@@ -1024,7 +1034,7 @@ async function carregarSessoes() {
 async function carregarLogs() {
   try {
     const logs = await apiRequest("/api/master/logs");
-    console.log("Logs:", logs);
+    Logger.master("Logs:", logs);
 
     // TODO: Implementar renderização de logs
   } catch (error) {
@@ -1042,7 +1052,7 @@ async function carregarLogs() {
 async function carregarAuditoria() {
   try {
     // TODO: Implementar endpoint /api/master/auditoria
-    console.log("⏳ Auditoria em desenvolvimento");
+    Logger.info("Auditoria em desenvolvimento");
   } catch (error) {
     console.error("❌ Erro ao carregar auditoria:", error);
   }
@@ -1058,7 +1068,7 @@ async function carregarAuditoria() {
 async function carregarSeguranca() {
   try {
     // TODO: Implementar endpoint /api/master/seguranca
-    console.log("⏳ Segurança em desenvolvimento");
+    Logger.security("Segurança em desenvolvimento");
   } catch (error) {
     console.error("❌ Erro ao carregar segurança:", error);
   }
@@ -1074,7 +1084,7 @@ async function carregarSeguranca() {
 async function carregarSistema() {
   try {
     // TODO: Implementar endpoint /api/master/sistema
-    console.log("⏳ Sistema em desenvolvimento");
+    Logger.performance("Sistema em desenvolvimento"); //dependendo pode ser performance
   } catch (error) {
     console.error("❌ Erro ao carregar sistema:", error);
   }
@@ -1090,7 +1100,7 @@ async function carregarSistema() {
 async function carregarConfig() {
   try {
     // TODO: Implementar endpoint /api/master/config
-    console.log("⏳ Configurações em desenvolvimento");
+    Logger.info("⏳ Configurações em desenvolvimento");
   } catch (error) {
     console.error("❌ Erro ao carregar configurações:", error);
   }
@@ -1110,6 +1120,8 @@ async function bloquearUsuario(id) {
 
   try {
     await apiRequest(`/api/master/bloquear/${id}`, { method: "POST" });
+    Logger.master("Usuário bloqueado:", id);
+
     alert("✅ Usuário bloqueado com sucesso");
 
     // Atualiza cache
@@ -1133,6 +1145,8 @@ async function forcarLogout(id) {
 
   try {
     await apiRequest(`/api/master/forcar-logout/${id}`, { method: "POST" });
+
+    Logger.master("Logout forçado para usuário:", id);
     alert("✅ Logout forçado com sucesso");
 
     // Atualiza cache
@@ -1156,6 +1170,8 @@ async function desativarUsuario(id) {
 
   try {
     await apiRequest(`/api/master/desativar/${id}`, { method: "POST" });
+    Logger.master("Usuário desativado:", id);
+
     alert("✅ Usuário desativado com sucesso");
 
     // Atualiza cache
@@ -1177,7 +1193,7 @@ async function desativarUsuario(id) {
  * Faz logout do sistema
  */
 function logout(motivo = "") {
-  console.log("🚪 Logout solicitado:", motivo);
+  Logger.auth("🚪 Logout solicitado:", motivo);
 
   // Redireciona
   if (motivo) {
@@ -1257,7 +1273,7 @@ function fecharModal() {
  * Exporta auditoria em CSV
  */
 function exportarAuditoria() {
-  console.log("📥 Exportando auditoria...");
+  Logger.master("📥 Exportando auditoria...");
   // TODO: Implementar download de audit.csv
   alert("⏳ Funcionalidade em desenvolvimento");
 }
@@ -1266,7 +1282,7 @@ function exportarAuditoria() {
  * Exporta logs em CSV
  */
 function exportarLogs() {
-  console.log("📥 Exportando logs...");
+  Logger.master("📥 Exportando logs...");
   // TODO: Implementar download de logs.csv
   alert("⏳ Funcionalidade em desenvolvimento");
 }
@@ -1279,7 +1295,7 @@ function exportarLogs() {
  * Inicializa Master Panel
  */
 async function inicializar() {
-  console.log("🚀 Iniciando Master Panel...");
+  Logger.master("🚀 Iniciando Master Panel...");
 
   const autorizado = await verificarAutenticacao();
 
@@ -1287,9 +1303,9 @@ async function inicializar() {
     return;
   }
 
-  inicializarGraficos();
-
   abrirAba("dashboard");
+
+  inicializarGraficos();
 
   setInterval(() => {
     if (abaAtiva === "dashboard") {
